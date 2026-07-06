@@ -1,0 +1,14 @@
+SOURCE 01-master-data.sql;
+SOURCE 02-departments-designations-grades.sql;
+SOURCE 03-users-roles-permissions.sql;
+SOURCE 04-employees.sql;
+SOURCE 05-attendance.sql;
+SOURCE 06-leave-management.sql;
+SOURCE 07-payroll.sql;
+SOURCE 08-recruitment.sql;
+SOURCE 09-performance-management.sql;
+SOURCE 10-assets-management.sql;
+SOURCE 11-grievance-disciplinary-exit.sql;
+SOURCE 12-platform-core.sql;
+SOURCE 13-ai-automation-integrations.sql;
+SOURCE 14-form-builder-holidays-training.sql;

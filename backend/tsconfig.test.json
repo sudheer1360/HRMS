@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist-test",
+    "rootDir": ".",
+    "noEmit": false,
+    "noEmitOnError": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/modules/leave/**/*.ts",
+    "src/common/**/*.ts",
+    "src/config/database.ts",
+    "tests/unit/leave.schema.node.test.ts",
+    "tests/unit/leave.service.test.ts"
+  ]
+}

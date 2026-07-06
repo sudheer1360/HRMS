@@ -1,0 +1,23 @@
+node_modules
+dist
+
+# Optional: Ignore documentation files
+/docs
+/feature-files
+
+# Optional: Ignore log files
+logs
+*.log
+*.md
+*.bat
+
+
+# Optional: Ignore environment variable files
+.env
+
+# Optional: Ignore build artifacts
+build
+
+# Optional: Ignore coverage reports
+coverage
+*.coverage

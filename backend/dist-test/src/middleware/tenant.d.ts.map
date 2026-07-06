@@ -1,0 +1,1 @@
+{"version":3,"file":"tenant.d.ts","sourceRoot":"","sources":["../../../src/middleware/tenant.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,YAAY,EAAE,MAAM,SAAS,CAAC;AACjD,OAAO,EAAE,oBAAoB,EAAE,MAAM,0BAA0B,CAAC;AAGhE,wBAAsB,cAAc,CAClC,GAAG,EAAE,oBAAoB,EACzB,IAAI,EAAE,QAAQ,EACd,IAAI,EAAE,YAAY,GACjB,OAAO,CAAC,IAAI,CAAC,CAmBf"}

@@ -1,0 +1,99 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hrms-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: hrms_password
+      MYSQL_DATABASE: hrms
+      MYSQL_USER: hrms_user
+      MYSQL_PASSWORD: hrms_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-phrms_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7-alpine
+    container_name: hrms-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_password", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.api
+    container_name: hrms-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: hrms_password
+      DB_NAME: hrms
+      REDIS_URL: redis://:redis_password@redis:6379
+      JWT_PRIVATE_KEY: "21f7c2366786e73df13d69f945ef60c1d1561856257f19f5c8c3be138b070e74ece04428fd24e15bc47508f6bd159ab23cbaae43ec8f06bbbfe6e7b6f5bf86f4"
+      JWT_PUBLIC_KEY: "f17b758edf037a9ee25b2c8e6708b4d1f85c604069fe1ff48174b8269c6e21d3b87e47acaf2601417349d813b7f8a3ebad86e2c60a916cf4193ca1a088002951"
+      JWT_ACCESS_EXPIRY: "15m"
+      JWT_REFRESH_EXPIRY: "7d"
+      CORS_ORIGIN: "http://localhost:5173"
+      PORT: "3000"
+      LOG_LEVEL: debug
+      BCRYPT_ROUNDS: "12"
+      ENCRYPTION_KEY: "dev-32-byte-encryption-key-here!!"
+      RATE_LIMIT_WINDOW_MS: "60000"
+      RATE_LIMIT_MAX: "100"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../backend/src:/app/src
+    command: >
+      sh -c "
+        echo '>>> Running database setup...' &&
+        npx tsx src/infrastructure/database/setup.ts &&
+        echo '>>> Running seed...' &&
+        npx tsx src/infrastructure/database/seed.ts &&
+        echo '>>> Starting API server...' &&
+        npx tsx watch src/index.ts
+      "
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: hrms-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - ../frontend/src:/app/src
+      - ../frontend/index.html:/app/index.html
+
+volumes:
+  mysqldata:
+  redisdata:
