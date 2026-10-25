@@ -3,7 +3,6 @@ import type { Employee, PaginatedResponse } from '@types';
 
 export interface EmployeeDetail extends Employee {
   middleName?: string;
-  gender?: string;
   dateOfBirth?: string;
   maritalStatus?: string;
   bloodGroup?: string;

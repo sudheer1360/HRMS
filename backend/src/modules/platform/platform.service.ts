@@ -143,11 +143,11 @@ export class PlatformService {
 
   async createWorkflow(tenantId: string, input: any) {
     const id = await insert(
-      `INSERT INTO automation_workflows (id, tenant_id, name, trigger_event, conditions_json, actions_json, is_active)
+      `INSERT INTO automation_workflows (id, tenant_id, workflow_name, trigger_event, conditions_json, actions_json, is_active)
        VALUES (UUID(), ?, ?, ?, ?, ?, ?)`,
-      [tenantId, input.name, input.triggerEvent,
+      [tenantId, input.workflowName ?? input.name, input.triggerEvent ?? input.triggerType,
        input.conditions ? JSON.stringify(input.conditions) : null,
-       input.actions ? JSON.stringify(input.actions) : null,
+       input.actions ? JSON.stringify(input.actions) : JSON.stringify([]),
        input.isActive ? 1 : 0]
     );
     return queryOne('SELECT * FROM automation_workflows WHERE id = ?', [id]);
@@ -260,11 +260,17 @@ export class PolicyService {
   }
 
   async create(tenantId: string, userId: string, input: any) {
-    const code = input.code || `POL-${Date.now().toString(36).toUpperCase()}`;
+    const code = input.policyCode || input.code || `POL-${Date.now().toString(36).toUpperCase()}`;
+    // Auto-resolve companyId if not provided
+    let companyId = input.companyId;
+    if (!companyId) {
+      const company = await queryOne<any>('SELECT id FROM companies WHERE tenant_id = ? LIMIT 1', [tenantId]);
+      companyId = company?.id ?? tenantId;
+    }
     const id = await insert(
       `INSERT INTO policies (id, tenant_id, company_id, title, policy_code, category, content, effective_date, requires_acknowledgement, status, created_by)
        VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, 'Draft', ?)`,
-      [tenantId, input.companyId, input.title, code, input.category, input.content,
+      [tenantId, companyId, input.title, code, input.category, input.content,
        input.effectiveDate, input.requiresAcknowledgement ? 1 : 0, userId]
     );
     return queryOne('SELECT * FROM policies WHERE id = ?', [id]);

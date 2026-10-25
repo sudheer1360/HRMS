@@ -150,63 +150,63 @@ export default function TemplatesListPage() {
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Template</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Category</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Created</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {templates.map((tpl) => (
-                <tr key={tpl.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">{CATEGORY_ICONS[tpl.category] ?? '📄'}</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{tpl.form_name}</p>
-                        {tpl.description && (
-                          <p className="text-xs text-gray-400 truncate max-w-xs">{tpl.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
-                      {TEMPLATE_CATEGORIES.find((c) => c.value === tpl.category)?.label ?? tpl.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={statusVariant(tpl.status)}>{tpl.status}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{safeDate(tpl.created_at)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <Link to={`/templates/${tpl.id}`} className="p-1.5 rounded hover:bg-gray-100" aria-label="Edit" title="Edit">
-                        <Edit size={14} />
-                      </Link>
-                      <button
-                        onClick={() => { setArchiveId(tpl.id); setArchiveName(tpl.form_name); }}
-                        className="p-1.5 rounded hover:bg-red-50 hover:text-danger"
-                        title="Archive template" aria-label="Archive template"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-  
-                  </td>
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Template</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Category</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Created</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
                 </tr>
-              ))}
-              {templates.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-400">No form templates found.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {templates.map((tpl) => (
+                  <tr key={tpl.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{CATEGORY_ICONS[tpl.category] ?? '📄'}</span>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{tpl.form_name}</p>
+                          {tpl.description && (
+                            <p className="text-xs text-gray-400 truncate max-w-xs">{tpl.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
+                        {TEMPLATE_CATEGORIES.find((c) => c.value === tpl.category)?.label ?? tpl.category}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={statusVariant(tpl.status)}>{tpl.status}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{safeDate(tpl.created_at)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <Link to={`/templates/${tpl.id}`} className="p-1.5 rounded hover:bg-gray-100" aria-label="Edit" title="Edit">
+                          <Edit size={14} />
+                        </Link>
+                        <button
+                          onClick={() => { setArchiveId(tpl.id); setArchiveName(tpl.form_name); }}
+                          className="p-1.5 rounded hover:bg-red-50 hover:text-danger"
+                          title="Archive template" aria-label="Archive template"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {templates.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">No form templates found.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       <ConfirmDialog
         open={!!archiveId}

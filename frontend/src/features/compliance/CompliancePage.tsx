@@ -232,7 +232,7 @@ function FilingsTab() {
   });
   const filings: any[] = (data?.data?.length ? data.data : FB_FILINGS);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(filingSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof filingSchema>>({ resolver: zodResolver(filingSchema) });
 
   const createMut = useMutation({
     mutationFn: (d: any) => api.post('/compliance/filings', d),

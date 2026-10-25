@@ -154,7 +154,7 @@ function OffersTab() {
   });
   const offers: any[] = (data?.data?.length ? data.data : FB_OFFERS);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(offerSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof offerSchema>>({ resolver: zodResolver(offerSchema) });
 
   const createMut = useMutation({
     mutationFn: (d: any) => api.post('/recruitment/offers', d),

@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
 export const createTicketSchema = z.object({
-  category: z.enum(['Payroll', 'Leave', 'Attendance', 'IT', 'Policy', 'Document', 'Other']),
+  category: z.enum([
+    'Payroll', 'Leave', 'Attendance', 'IT', 'Policy', 'Document', 'Other',
+    'Payroll & Salary', 'Leave & Attendance', 'Benefits & Insurance',
+    'IT Support', 'Policy Clarification', 'Onboarding',
+    'Transfer & Relocation', 'Performance & Appraisal', 'Exit & Separation', 'Other HR',
+  ]),
   priority: z.enum(['Low', 'Medium', 'High', 'Critical']),
   subject: z.string().min(5).max(255),
   description: z.string().min(10),

@@ -65,7 +65,7 @@ function PayrollRunsTab() {
     queryFn: async () => { const { data } = await api.get('/payroll/runs?limit=30'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(runSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof runSchema>>({ resolver: zodResolver(runSchema) });
 
   const createMutation = useMutation({
     mutationFn: (d: any) => api.post('/payroll/runs', d),

@@ -32,6 +32,7 @@ export const lockAttendanceSchema = z.object({
 export const attendanceFilterSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+  date: z.string().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
   status: z.string().optional(),

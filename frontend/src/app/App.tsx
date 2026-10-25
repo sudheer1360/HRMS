@@ -185,6 +185,7 @@ function AppRoutes() {
       <Route path="/integrations" element={<ProtectedLayout><LazyLoad><IntegrationPage /></LazyLoad></ProtectedLayout>} />
       <Route path="/system/nfr" element={<ProtectedLayout><LazyLoad><NFRDashboardPage /></LazyLoad></ProtectedLayout>} />
       <Route path="/compensation" element={<ProtectedLayout><LazyLoad><CompensationPage /></LazyLoad></ProtectedLayout>} />
+      <Route path="/travel-expense" element={<ProtectedLayout><LazyLoad><TravelExpensePage /></LazyLoad></ProtectedLayout>} />
       <Route path="/compliance" element={<ProtectedLayout><LazyLoad><CompliancePage /></LazyLoad></ProtectedLayout>} />
       <Route path="/offer-joining" element={<ProtectedLayout><LazyLoad><OfferJoiningPage /></LazyLoad></ProtectedLayout>} />
       <Route path="/settings" element={<ProtectedLayout><LazyLoad><SettingsPage /></LazyLoad></ProtectedLayout>} />

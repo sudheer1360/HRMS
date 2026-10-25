@@ -54,17 +54,21 @@ export class AttendanceService {
   }
 
   async listDaily(tenantId: string, params: any) {
-    const { page = 1, limit = 20, fromDate, toDate, status, employeeId, departmentId } = params;
+    const { page = 1, limit = 20, date, fromDate, toDate, status, employeeId, departmentId } = params;
     let where = 'WHERE al.tenant_id = ?'; const vals: any[] = [tenantId];
     if (status) { where += ' AND al.status = ?'; vals.push(status); }
     if (employeeId) { where += ' AND al.employee_id = ?'; vals.push(employeeId); }
-    if (fromDate) { where += ' AND al.attendance_date >= ?'; vals.push(fromDate); }
-    if (toDate) { where += ' AND al.attendance_date <= ?'; vals.push(toDate); }
+    // support both ?date= (single day) and ?fromDate=&toDate= range
+    if (date) { where += ' AND al.attendance_date = ?'; vals.push(date); }
+    else {
+      if (fromDate) { where += ' AND al.attendance_date >= ?'; vals.push(fromDate); }
+      if (toDate) { where += ' AND al.attendance_date <= ?'; vals.push(toDate); }
+    }
     if (departmentId) { where += ' AND e.department_id = ?'; vals.push(departmentId); }
 
     const joinClause = departmentId ? 'LEFT JOIN employees e ON al.employee_id = e.id' : '';
     const [rows, cnt] = await Promise.all([
-      query(`SELECT al.*, e.full_name, e.employee_code FROM attendance_logs al LEFT JOIN employees e ON al.employee_id = e.id ${where} ORDER BY al.attendance_date DESC LIMIT ? OFFSET ?`,
+      query(`SELECT al.*, CONCAT(e.first_name, ' ', e.last_name) AS fullName, e.employee_code AS employeeCode FROM attendance_logs al LEFT JOIN employees e ON al.employee_id = e.id ${where} ORDER BY al.attendance_date DESC LIMIT ? OFFSET ?`,
         [...vals, Number(limit), (Number(page) - 1) * Number(limit)]),
       query<any>(`SELECT COUNT(*) as total FROM attendance_logs al ${joinClause} ${where}`, vals),
     ]);
@@ -135,7 +139,7 @@ export class AttendanceService {
     let where = 'WHERE acr.tenant_id = ?'; const vals: any[] = [tenantId];
     if (status) { where += ' AND acr.status = ?'; vals.push(status); }
     if (employeeId) { where += ' AND acr.employee_id = ?'; vals.push(employeeId); }
-    return query(`SELECT acr.*, e.full_name, e.employee_code FROM attendance_correction_requests acr LEFT JOIN employees e ON acr.employee_id = e.id ${where} ORDER BY acr.created_at DESC`, vals);
+    return query(`SELECT acr.*, CONCAT(e.first_name, ' ', e.last_name) AS fullName, e.employee_code AS employeeCode FROM attendance_correction_requests acr LEFT JOIN employees e ON acr.employee_id = e.id ${where} ORDER BY acr.created_at DESC`, vals);
   }
 
   async approveCorrection(id: string, tenantId: string, approverId: string) {

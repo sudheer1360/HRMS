@@ -30,13 +30,20 @@ const TABS = [
 ];
 
 const CATEGORY_OPTIONS = [
+  { value: 'General', label: 'General' },
+  { value: 'Leave', label: 'Leave' },
+  { value: 'Attendance', label: 'Attendance' },
+  { value: 'Payroll', label: 'Payroll' },
+  { value: 'Code of Conduct', label: 'Code of Conduct' },
+  { value: 'IT', label: 'IT' },
+  { value: 'Safety', label: 'Safety' },
+  { value: 'Benefits', label: 'Benefits' },
+  { value: 'Travel', label: 'Travel' },
   { value: 'HR', label: 'HR' },
   { value: 'Finance', label: 'Finance' },
-  { value: 'IT', label: 'IT' },
   { value: 'Legal', label: 'Legal' },
   { value: 'Operations', label: 'Operations' },
-  { value: 'Safety', label: 'Safety' },
-  { value: 'Code of Conduct', label: 'Code of Conduct' },
+  { value: 'Other', label: 'Other' },
 ];
 
 // ── My Policies tab ───────────────────────────────────────────────────────────
@@ -144,7 +151,7 @@ function AdminTab() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/policies/${id}/publish`),
+    mutationFn: (id: string) => api.post(`/policies/${id}/publish`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['all-policies'] }),
   });
 

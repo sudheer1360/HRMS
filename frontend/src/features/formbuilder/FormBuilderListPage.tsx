@@ -13,12 +13,15 @@ import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
 interface DynamicForm {
   id: string;
-  form_code: string;
-  form_name: string;
+  formCode: string;
+  form_code?: string;
+  formName: string;
+  form_name?: string;
   category: string;
   description?: string;
   status: 'Draft' | 'Published' | 'Archived';
-  created_at: string;
+  createdAt: string;
+  created_at?: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -135,10 +138,10 @@ export default function FormBuilderListPage() {
                   </div>
                   <Badge variant={statusVariant(form.status)}>{form.status}</Badge>
                 </div>
-                <span className="text-xs text-gray-400 font-mono">{form.form_code}</span>
+                <span className="text-xs text-gray-400 font-mono">{form.formCode ?? form.form_code}</span>
               </div>
 
-              <h3 className="font-semibold text-gray-900 mb-1 truncate">{form.form_name}</h3>
+              <h3 className="font-semibold text-gray-900 mb-1 truncate">{form.formName ?? form.form_name}</h3>
               {form.description && (
                 <p className="text-sm text-gray-500 mb-3 line-clamp-2">{form.description}</p>
               )}
@@ -146,7 +149,7 @@ export default function FormBuilderListPage() {
               <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
                 <span className="bg-gray-100 px-2 py-0.5 rounded-full">{form.category}</span>
                 <span>·</span>
-                <span>{formatDate(form.created_at)}</span>
+                <span>{formatDate(form.createdAt ?? form.created_at ?? '')}</span>
               </div>
 
               <div className="flex items-center gap-1 pt-3 border-t border-gray-100">

@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export const createPolicySchema = z.object({
-  companyId: z.string().min(1),
+  companyId: z.string().min(1).optional(),
   title: z.string().min(2).max(255),
-  policyCode: z.string().min(2).max(50),
-  category: z.enum(['General', 'Leave', 'Attendance', 'Payroll', 'Code of Conduct', 'IT', 'Safety', 'Benefits', 'Travel', 'Other']),
+  policyCode: z.string().min(2).max(50).optional(),
+  category: z.enum(['General', 'Leave', 'Attendance', 'Payroll', 'Code of Conduct', 'IT', 'Safety', 'Benefits', 'Travel', 'Other', 'HR', 'Finance', 'Legal', 'Operations']),
   content: z.string().min(10),
   effectiveDate: z.coerce.date(),
   reviewDate: z.coerce.date().optional(),

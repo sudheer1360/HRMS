@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MessageCircle, Bot, Zap, BarChart3, Webhook, Key, Plus, Send } from 'lucide-react';
+import { MessageCircle, Bot, Zap, BarChart3, Webhook, Send, Plus } from 'lucide-react';
 import { Button } from '@components/ui/Button';
-import { Input, Badge, Spinner } from '@components/ui/Input';
+import { Input, Badge } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
 import api from '@lib/axios';
 import { PageHeader } from '@components/ui/PageHeader';
@@ -47,21 +47,31 @@ export default function PlatformPage() {
       {tab === 'helpdesk' && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-          <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="bg-gray-50 border-b border-gray-200">
-            <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Ticket</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Category</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Priority</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Subject</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
-          </tr></thead><tbody className="divide-y divide-gray-100">
-            {tickets?.data?.map((t: any) => (
-              <tr key={t.id} className="hover:bg-gray-50 transition-colors"><td className="px-4 py-3 text-sm font-medium text-primary">{t.ticketCode}</td>
-                <td className="px-4 py-3 text-sm"><Badge>{t.category}</Badge></td>
-                <td className="px-4 py-3"><Badge variant={t.priority === 'Critical' ? 'danger' : t.priority === 'High' ? 'warning' : 'info'}>{t.priority}</Badge></td>
-                <td className="px-4 py-3 text-sm">{t.subject}</td>
-                <td className="px-4 py-3"><Badge variant={t.status === 'Resolved' ? 'success' : t.status === 'Closed' ? 'default' : 'warning'}>{t.status}</Badge></td>
-              </tr>
-            ))}
-            {(!tickets?.data?.length) && <tr><td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">No records found.</td></tr>}
-          </tbody></table></div>
-        </div>
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Ticket</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Category</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Priority</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Subject</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {tickets?.data?.map((t: any) => (
+                  <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-primary">{t.ticketCode}</td>
+                    <td className="px-4 py-3 text-sm"><Badge>{t.category}</Badge></td>
+                    <td className="px-4 py-3"><Badge variant={t.priority === 'Critical' ? 'danger' : t.priority === 'High' ? 'warning' : 'info'}>{t.priority}</Badge></td>
+                    <td className="px-4 py-3 text-sm">{t.subject}</td>
+                    <td className="px-4 py-3"><Badge variant={t.status === 'Resolved' ? 'success' : t.status === 'Closed' ? 'default' : 'warning'}>{t.status}</Badge></td>
+                  </tr>
+                ))}
+                {(!tickets?.data?.length) && <tr><td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">No records found.</td></tr>}
+              </tbody>
+            </table>
           </div>
+        </div>
       )}
 
       {/* AI Assistant */}
@@ -86,70 +96,121 @@ export default function PlatformPage() {
             </div>
           </div>
         </div>
-          </div>
       )}
 
       {/* Automation */}
       {tab === 'automation' && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-          <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="bg-gray-50 border-b border-gray-200">
-            <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Workflow</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trigger</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Active</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Success</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Last Run</th>
-          </tr></thead><tbody className="divide-y divide-gray-100">
-            {workflows?.data?.map((w: any) => (
-              <tr key={w.id} className="hover:bg-gray-50 transition-colors"><td className="px-4 py-3 text-sm font-medium">{w.workflowName}</td><td className="px-4 py-3 text-sm"><Badge>{w.triggerType}</Badge></td>
-                <td className="px-4 py-3"><Badge variant={w.isActive ? 'success' : 'default'}>{w.isActive ? 'Active' : 'Inactive'}</Badge></td>
-                <td className="px-4 py-3 text-sm text-green-600">{w.successCount}</td><td className="px-4 py-3 text-sm text-gray-500">{w.lastRunAt ? formatDate(w.lastRunAt) : 'Never'}</td></tr>
-            ))}
-            {(!workflows?.data?.length) && <tr><td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">No records found.</td></tr>}
-          </tbody></table></div>
-        </div>
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Workflow</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Trigger</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Active</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Success</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Last Run</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {workflows?.data?.map((w: any) => (
+                  <tr key={w.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium">{w.workflowName}</td>
+                    <td className="px-4 py-3 text-sm"><Badge>{w.triggerType}</Badge></td>
+                    <td className="px-4 py-3"><Badge variant={w.isActive ? 'success' : 'default'}>{w.isActive ? 'Active' : 'Inactive'}</Badge></td>
+                    <td className="px-4 py-3 text-sm text-green-600">{w.successCount}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{w.lastRunAt ? formatDate(w.lastRunAt) : 'Never'}</td>
+                  </tr>
+                ))}
+                {(!workflows?.data?.length) && <tr><td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">No records found.</td></tr>}
+              </tbody>
+            </table>
           </div>
+        </div>
       )}
 
       {/* Reports */}
       {tab === 'reports' && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-          <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="bg-gray-50 border-b border-gray-200">
-            <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Report</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Module</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Type</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Scheduled</th>
-          </tr></thead><tbody className="divide-y divide-gray-100">
-            {reports?.data?.map((r: any) => (
-              <tr key={r.id} className="hover:bg-gray-50 transition-colors"><td className="px-4 py-3 text-sm font-medium">{r.reportName}</td><td className="px-4 py-3 text-sm"><Badge variant="info">{r.module}</Badge></td>
-                <td className="px-4 py-3 text-sm">{r.reportType}</td><td className="px-4 py-3"><Badge variant={r.isScheduled ? 'success' : 'default'}>{r.isScheduled ? 'Scheduled' : 'On Demand'}</Badge></td></tr>
-            ))}
-            {(!reports?.data?.length) && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No reports defined</td></tr>}
-          </tbody></table></div>
-        </div>
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Report</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Module</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Type</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Scheduled</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {reports?.data?.map((r: any) => (
+                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium">{r.reportName}</td>
+                    <td className="px-4 py-3 text-sm"><Badge variant="info">{r.module}</Badge></td>
+                    <td className="px-4 py-3 text-sm">{r.reportType}</td>
+                    <td className="px-4 py-3"><Badge variant={r.isScheduled ? 'success' : 'default'}>{r.isScheduled ? 'Scheduled' : 'On Demand'}</Badge></td>
+                  </tr>
+                ))}
+                {(!reports?.data?.length) && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No reports defined</td></tr>}
+              </tbody>
+            </table>
           </div>
+        </div>
       )}
 
-      {/* API Integration */}
+      {/* API & Integrations */}
       {tab === 'api' && (
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="p-4 border-b flex justify-between"><h3 className="font-semibold">API Keys</h3><Button size="sm"><Plus size={14} /> Generate Key</Button></div>
             <div className="overflow-x-auto">
-            <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Name</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Prefix</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Scopes</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Active</th>
-            </tr></thead><tbody className="divide-y divide-gray-100">
-              {apiKeys?.data?.map((k: any) => (
-                <tr key={k.id} className="hover:bg-gray-50 transition-colors"><td className="px-4 py-3 text-sm font-medium">{k.keyName}</td><td className="px-4 py-3 text-sm font-mono text-gray-500">{k.prefix}...</td><td className="px-4 py-3 text-sm text-gray-500">{k.scopes}</td>
-                  <td className="px-4 py-3"><Badge variant={k.isActive ? 'success' : 'danger'}>{k.isActive ? 'Active' : 'Revoked'}</Badge></td></tr>
-              ))}
-            </tbody></table></div>
+              <table className="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Name</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Prefix</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Scopes</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Active</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {apiKeys?.data?.map((k: any) => (
+                    <tr key={k.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium">{k.keyName}</td>
+                      <td className="px-4 py-3 text-sm font-mono text-gray-500">{k.prefix}...</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{k.scopes}</td>
+                      <td className="px-4 py-3"><Badge variant={k.isActive ? 'success' : 'danger'}>{k.isActive ? 'Active' : 'Revoked'}</Badge></td>
+                    </tr>
+                  ))}
+                  {(!apiKeys?.data?.length) && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No API keys created</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
+
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="p-4 border-b"><h3 className="font-semibold">Webhooks</h3></div>
             <div className="overflow-x-auto">
-            <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Name</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Event</th><th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
-            </tr></thead><tbody className="divide-y divide-gray-100">
-              {webhooks?.data?.map((w: any) => (
-                <tr key={w.id} className="hover:bg-gray-50 transition-colors"><td className="px-4 py-3 text-sm font-medium">{w.webhookName}</td><td className="px-4 py-3 text-sm"><Badge variant="info">{w.eventType}</Badge></td>
-                  <td className="px-4 py-3"><Badge variant={w.isActive ? 'success' : 'default'}>{w.isActive ? 'Active' : 'Inactive'}</Badge></td></tr>
-              ))}
-            </tbody></table></div>
+              <table className="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Name</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Event</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {webhooks?.data?.map((w: any) => (
+                    <tr key={w.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium">{w.webhookName}</td>
+                      <td className="px-4 py-3 text-sm"><Badge variant="info">{w.eventType}</Badge></td>
+                      <td className="px-4 py-3"><Badge variant={w.isActive ? 'success' : 'default'}>{w.isActive ? 'Active' : 'Inactive'}</Badge></td>
+                    </tr>
+                  ))}
+                  {(!webhooks?.data?.length) && <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-500">No webhooks configured</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

@@ -851,4 +851,12 @@ export async function seed() {
   console.log('');
 }
 
-seed().catch(err => { console.error('Seed error:', err); process.exit(1); });
+seed()
+  .then(() => {
+    console.log('Seed completed successfully. Exiting...');
+    process.exit(0);
+  })
+  .catch(err => {
+    console.error('Seed error:', err);
+    process.exit(1);
+  });

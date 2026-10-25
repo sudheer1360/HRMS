@@ -91,7 +91,7 @@ function SalaryReviewsTab() {
   });
   const reviews: any[] = (data?.data?.length ? data.data : FB_REVIEWS);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(reviewSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof reviewSchema>>({ resolver: zodResolver(reviewSchema) });
 
   const createMut = useMutation({
     mutationFn: (d: any) => api.post('/compensation/review-cycles', d),
@@ -263,7 +263,7 @@ function BonusTab() {
   });
   const bonuses: any[] = (data?.data?.length ? data.data : FB_BONUSES);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(bonusSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof bonusSchema>>({ resolver: zodResolver(bonusSchema) });
 
   const createMut = useMutation({
     mutationFn: (d: any) => api.post('/compensation/bonuses', d),
@@ -384,7 +384,7 @@ function LoansTab() {
   });
   const loans: any[] = (data?.data?.length ? data.data : FB_LOANS);
 
-  const { register, handleSubmit, reset, formState: { errors }, watch } = useForm({
+  const { register, handleSubmit, reset, formState: { errors }, watch } = useForm<z.infer<typeof loanSchema>>({
     resolver: zodResolver(loanSchema),
     defaultValues: { loanType: 'Personal Loan', tenure: 12 },
   });

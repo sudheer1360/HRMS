@@ -81,7 +81,7 @@ function DevicesTab() {
     queryFn: async () => { const { data } = await api.get('/extended/biometric/devices'); return data.data ?? []; },
   });
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<z.infer<typeof deviceSchema>>({
     resolver: zodResolver(deviceSchema),
     defaultValues: { deviceType: 'Fingerprint', port: 4370 },
   });
@@ -195,6 +195,15 @@ function DevicesTab() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={() => { if (confirmId) { deleteMutation.mutate(confirmId); setConfirmId(null); } }}
+        title="Remove Device"
+        message="Remove this biometric device? This action cannot be undone."
+        confirmLabel="Remove Device"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -467,14 +476,6 @@ export default function BiometricPage() {
       {tab === 'logs'       && <LogsTab />}
       {tab === 'exceptions' && <ExceptionsTab />}
       {tab === 'sync'       && <SyncStatusTab />}
-      <ConfirmDialog
-        open={!!confirmId}
-        onClose={() => setConfirmId(null)}
-        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
-        message="Remove this biometric device?"
-        confirmLabel="Remove Device"
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }

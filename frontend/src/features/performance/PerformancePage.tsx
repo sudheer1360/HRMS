@@ -205,6 +205,14 @@ function MyGoalsTab() {
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
+        message="Delete this goal? This action cannot be undone."
+        confirmLabel="Delete Goal"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -233,7 +241,7 @@ function AppraisalsTab() {
     queryFn: async () => { const { data } = await api.get('/performance/appraisals/team?limit=30'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(selfAssessSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof selfAssessSchema>>({ resolver: zodResolver(selfAssessSchema) });
 
   const selfAssessMutation = useMutation({
     mutationFn: ({ id, d }: { id: string; d: any }) => api.post(`/performance/appraisals/${id}/self-assessment`, d),
@@ -351,8 +359,6 @@ function AppraisalsTab() {
               </tr></thead>
               <tbody className="divide-y divide-gray-100">
                 {teamList.map((a: any) => {
-                  const [rating, setRating] = React.useState('');
-                  const [comments, setComments] = React.useState('');
                   return (
                     <tr key={a.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium">{a.employeeName ?? a.employee?.fullName ?? '—'}</td>
@@ -664,14 +670,6 @@ export default function PerformancePage() {
       {tab === 'feedback'   && <FeedbackTab />}
       {tab === 'reviews'    && <ReviewsTab />}
       {tab === 'probation'  && <ProbationTab />}
-      <ConfirmDialog
-        open={!!confirmId}
-        onClose={() => setConfirmId(null)}
-        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
-        message="Delete this goal? This action cannot be undone."
-        confirmLabel="Delete Goal"
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }

@@ -447,7 +447,7 @@ function AdvancesTab() {
   });
   const advances: any[] = (data?.data?.length ? data.data : FB_ADVANCES);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(advanceSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof advanceSchema>>({ resolver: zodResolver(advanceSchema) });
 
   const createMut = useMutation({
     mutationFn: (d: any) => api.post('/travel/advances', d),

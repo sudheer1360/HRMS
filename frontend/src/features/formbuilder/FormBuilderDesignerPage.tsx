@@ -269,12 +269,6 @@ export default function FormBuilderDesignerPage() {
   const [saved, setSaved] = React.useState(false);
   const [savedId, setSavedId] = React.useState<string | undefined>(id);
 
-  const { isLoading } = useQuery({
-    queryKey: ['form', id],
-    queryFn: () => getForm(id!),
-    enabled: !isNew,
-    onSuccess: undefined, // use useEffect
-  });
 
   const { data: formData } = useQuery({
     queryKey: ['form', id],

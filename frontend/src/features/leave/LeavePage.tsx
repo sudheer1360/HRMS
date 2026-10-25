@@ -448,11 +448,11 @@ function HolidaysTab() {
 const typeSchema = z.object({
   leaveName: z.string().min(1, 'Required'),
   leaveCode: z.string().min(1, 'Required'),
-  maxDaysPerYear: z.coerce.number().min(0),
+  description: z.string().optional(),
   isPaid: z.string(),
-  carryForwardAllowed: z.string(),
-  encashmentAllowed: z.string(),
-  maxCarryForwardDays: z.coerce.number().min(0).optional(),
+  requiresApproval: z.string(),
+  allowEncashment: z.string(),
+  minDurationDays: z.coerce.number().min(0).optional(),
 });
 
 function LeaveTypesTab() {
@@ -475,7 +475,7 @@ function LeaveTypesTab() {
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(typeSchema),
-    defaultValues: { isPaid: 'true', carryForwardAllowed: 'false', encashmentAllowed: 'false', maxCarryForwardDays: 0 },
+    defaultValues: { isPaid: 'true', requiresApproval: 'true', allowEncashment: 'false', minDurationDays: 0.5 },
   });
 
   const saveMutation = useMutation({
@@ -492,13 +492,13 @@ function LeaveTypesTab() {
 
   function openEdit(t: any) {
     setEditItem(t);
-    setValue('leaveName', t.leaveName);
-    setValue('leaveCode', t.leaveCode);
-    setValue('maxDaysPerYear', t.maxDaysPerYear);
-    setValue('isPaid', String(t.isPaid));
-    setValue('carryForwardAllowed', String(t.carryForwardAllowed));
-    setValue('encashmentAllowed', String(t.encashmentAllowed));
-    setValue('maxCarryForwardDays', t.maxCarryForwardDays ?? 0);
+    setValue('leaveName', t.leaveName ?? t.leave_name);
+    setValue('leaveCode', t.leaveCode ?? t.leave_code);
+    setValue('description', t.description ?? '');
+    setValue('isPaid', String(Boolean(t.isPaid ?? t.is_paid ?? true)));
+    setValue('requiresApproval', String(Boolean(t.requiresApproval ?? t.requires_approval ?? true)));
+    setValue('allowEncashment', String(Boolean(t.allowEncashment ?? t.allow_encashment ?? false)));
+    setValue('minDurationDays', t.minDurationDays ?? t.min_duration_days ?? 0.5);
     setShowForm(true);
   }
 
@@ -518,11 +518,11 @@ function LeaveTypesTab() {
           <form onSubmit={handleSubmit(d => saveMutation.mutate(d))} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="Leave Name *" error={errors.leaveName?.message as string} {...register('leaveName')} />
             <Input label="Leave Code *" error={errors.leaveCode?.message as string} {...register('leaveCode')} />
-            <Input label="Max Days / Year *" type="number" {...register('maxDaysPerYear')} />
+            <Input label="Description" {...register('description')} />
             <Select label="Paid Leave?" options={[{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }]} {...register('isPaid')} />
-            <Select label="Carry Forward?" options={[{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }]} {...register('carryForwardAllowed')} />
-            <Select label="Encashable?" options={[{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }]} {...register('encashmentAllowed')} />
-            <Input label="Max Carry Forward Days" type="number" {...register('maxCarryForwardDays')} />
+            <Select label="Requires Approval?" options={[{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }]} {...register('requiresApproval')} />
+            <Select label="Encashable?" options={[{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }]} {...register('allowEncashment')} />
+            <Input label="Min Duration (days)" type="number" step="0.5" {...register('minDurationDays')} />
             <div className="sm:col-span-3 flex gap-3">
               <Button type="submit" size="sm" loading={saveMutation.isPending}>{editItem ? 'Update' : 'Create'}</Button>
               <Button type="button" size="sm" variant="secondary" onClick={() => { reset(); setShowForm(false); setEditItem(null); }}>Cancel</Button>
@@ -539,9 +539,9 @@ function LeaveTypesTab() {
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Leave Type</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Code</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Max Days</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Min Duration</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Paid</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Carry Fwd</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Approval</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Encashable</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -549,12 +549,12 @@ function LeaveTypesTab() {
             <tbody className="divide-y divide-gray-100">
               {types.map((t: any) => (
                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium">{t.leaveName}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{t.leaveCode}</td>
-                  <td className="px-4 py-3">{t.maxDaysPerYear}</td>
-                  <td className="px-4 py-3"><Badge variant={t.isPaid ? 'success' : 'default'}>{t.isPaid ? 'Paid' : 'Unpaid'}</Badge></td>
-                  <td className="px-4 py-3"><Badge variant={t.carryForwardAllowed ? 'info' : 'default'}>{t.carryForwardAllowed ? `Yes (${t.maxCarryForwardDays ?? 0}d)` : 'No'}</Badge></td>
-                  <td className="px-4 py-3"><Badge variant={t.encashmentAllowed ? 'success' : 'default'}>{t.encashmentAllowed ? 'Yes' : 'No'}</Badge></td>
+                  <td className="px-4 py-3 font-medium">{t.leaveName ?? t.leave_name}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{t.leaveCode ?? t.leave_code}</td>
+                  <td className="px-4 py-3">{t.minDurationDays ?? t.min_duration_days ?? '—'} days</td>
+                  <td className="px-4 py-3"><Badge variant={(t.isPaid ?? t.is_paid) ? 'success' : 'default'}>{(t.isPaid ?? t.is_paid) ? 'Paid' : 'Unpaid'}</Badge></td>
+                  <td className="px-4 py-3"><Badge variant={(t.requiresApproval ?? t.requires_approval) ? 'warning' : 'default'}>{(t.requiresApproval ?? t.requires_approval) ? 'Required' : 'Auto'}</Badge></td>
+                  <td className="px-4 py-3"><Badge variant={(t.allowEncashment ?? t.allow_encashment) ? 'success' : 'default'}>{(t.allowEncashment ?? t.allow_encashment) ? 'Yes' : 'No'}</Badge></td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button onClick={() => openEdit(t)} className="p-1.5 rounded hover:bg-gray-100"><Edit size={14} /></button>

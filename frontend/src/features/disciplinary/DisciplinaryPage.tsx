@@ -72,7 +72,7 @@ function InitiateTab() {
 
   const { data: empData } = useQuery({
     queryKey: ['employees-list'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=200'); return data; },
+    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data; },
   });
   const employees: any[] = empData?.data ?? [];
 
@@ -122,7 +122,7 @@ function InitiateTab() {
           <select {...register('employeeId')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">Select employee</option>
             {employees.map((e: any) => (
-              <option key={e.id} value={e.id}>{e.first_name} {e.last_name} — {e.department ?? ''}</option>
+              <option key={e.id} value={e.id}>{e.fullName ?? `${e.firstName ?? e.first_name} ${e.lastName ?? e.last_name}`} — {e.departmentName ?? e.department ?? ''}</option>
             ))}
           </select>
           {errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId.message}</p>}
@@ -274,7 +274,7 @@ function CaseCard({ c }: { c: any }) {
               <p className="text-xs font-semibold text-orange-800 mb-2">Issue Show-Cause Notice</p>
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={() => mutation.mutate({ endpoint: 'show-cause', data: {} })}
                 disabled={mutation.isPending}
               >
@@ -294,7 +294,7 @@ function CaseCard({ c }: { c: any }) {
               />
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={() => mutation.mutate({ endpoint: 'hearing', data: { hearingDate } })}
                 disabled={!hearingDate || mutation.isPending}
               >

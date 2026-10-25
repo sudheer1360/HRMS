@@ -79,7 +79,7 @@ function AssetsTab() {
     queryFn: async () => { const { data } = await api.get('/extended/assets?limit=100'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof assetSchema>>({
     resolver: zodResolver(assetSchema),
     defaultValues: { assetType: 'Laptop', condition: 'New' },
   });
@@ -192,6 +192,15 @@ function AssetsTab() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={() => { if (confirmId) { deleteMutation.mutate(confirmId); setConfirmId(null); } }}
+        title="Delete Asset"
+        message="Delete this asset? This action cannot be undone."
+        confirmLabel="Delete Asset"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -217,7 +226,7 @@ function AllocationsTab() {
 
   const { data: employees } = useQuery({
     queryKey: ['employees-short'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=200'); return data; },
+    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data; },
   });
 
   const { data, isLoading } = useQuery({
@@ -225,7 +234,7 @@ function AllocationsTab() {
     queryFn: async () => { const { data } = await api.get('/extended/assets/allocations?limit=100'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(allocationSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof allocationSchema>>({ resolver: zodResolver(allocationSchema) });
 
   const allocateMutation = useMutation({
     mutationFn: (d: any) => api.post('/extended/assets/allocations', d),
@@ -338,7 +347,7 @@ function MaintenanceTab() {
     queryFn: async () => { const { data } = await api.get('/extended/assets/maintenance?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof maintenanceSchema>>({
     resolver: zodResolver(maintenanceSchema),
     defaultValues: { maintenanceType: 'Service' },
   });
@@ -486,14 +495,6 @@ export default function AssetManagementPage() {
       {tab === 'allocations' && <AllocationsTab />}
       {tab === 'maintenance' && <MaintenanceTab />}
       {tab === 'my'          && <MyAssetsTab />}
-      <ConfirmDialog
-        open={!!confirmId}
-        onClose={() => setConfirmId(null)}
-        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
-        message="Delete this asset? This action cannot be undone."
-        confirmLabel="Delete Asset"
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }

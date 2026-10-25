@@ -75,7 +75,7 @@ function ContractorsTab() {
     queryFn: async () => { const { data } = await api.get('/extended/contractors?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof contractorSchema>>({
     resolver: zodResolver(contractorSchema),
     defaultValues: { contractType: 'Vendor' },
   });
@@ -187,6 +187,15 @@ function ContractorsTab() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={() => { if (confirmId) { deleteMutation.mutate(confirmId); setConfirmId(null); } }}
+        title="Delete Contractor"
+        message="Delete this contractor? This action cannot be undone."
+        confirmLabel="Delete Contractor"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -218,7 +227,7 @@ function WorkersTab() {
     queryFn: async () => { const { data } = await api.get('/extended/contractors/workers?limit=100'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof workerSchema>>({
     resolver: zodResolver(workerSchema),
     defaultValues: { billingType: 'Monthly' },
   });
@@ -376,7 +385,7 @@ function BillingTab() {
     queryFn: async () => { const { data } = await api.get('/extended/contractors/invoices?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(invoiceSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof invoiceSchema>>({ resolver: zodResolver(invoiceSchema) });
 
   const createMutation = useMutation({
     mutationFn: (d: any) => api.post('/extended/contractors/invoices', d),
@@ -570,14 +579,6 @@ export default function ContractorPage() {
       {tab === 'attendance'  && <ContractorAttendanceTab />}
       {tab === 'billing'     && <BillingTab />}
       {tab === 'compliance'  && <ComplianceTab />}
-      <ConfirmDialog
-        open={!!confirmId}
-        onClose={() => setConfirmId(null)}
-        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
-        message="Delete this contractor? This action cannot be undone."
-        confirmLabel="Delete Contractor"
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }

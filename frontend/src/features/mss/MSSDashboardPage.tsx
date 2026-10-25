@@ -81,7 +81,7 @@ function ApprovalsTab() {
               {leaves.map((l: any) => (
                 <tr key={l.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium">{l.employeeName ?? l.employeeId?.slice(0, 8)}</td>
-                  <td className="px-4 py-3"><Badge variant="info">{l.leaveType ?? l.leave_type}</Badge></td>
+                  <td className="px-4 py-3"><Badge variant="info">{l.leaveName ?? l.leaveType ?? l.leave_type}</Badge></td>
                   <td className="px-4 py-3">{safeDate(l.fromDate ?? l.from_date)}</td>
                   <td className="px-4 py-3">{safeDate(l.toDate ?? l.to_date)}</td>
                   <td className="px-4 py-3">{l.totalDays ?? l.total_days ?? '—'}</td>
@@ -124,7 +124,7 @@ function ApprovalsTab() {
             <tbody className="divide-y divide-gray-100">
               {corrections.map((c: any) => (
                 <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium">{c.employeeName ?? c.employeeId?.slice(0, 8)}</td>
+                  <td className="px-4 py-3 font-medium">{c.fullName ?? c.employeeName ?? c.employeeId?.slice(0, 8)}</td>
                   <td className="px-4 py-3">{safeDate(c.attendanceDate ?? c.attendance_date)}</td>
                   <td className="px-4 py-3">
                     <span className="text-gray-500">{c.currentStatus ?? c.current_status}</span>
@@ -257,9 +257,9 @@ function TeamAttendanceTab() {
             <tbody className="divide-y divide-gray-100">
               {records.map((r: any) => (
                 <tr key={r.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium">{r.employeeName ?? r.employeeId?.slice(0, 8)}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{r.clockIn ?? r.clock_in ?? '—'}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{r.clockOut ?? r.clock_out ?? '—'}</td>
+                  <td className="px-4 py-3 font-medium">{r.fullName ?? r.employeeName ?? r.employeeId?.slice(0, 8)}</td>
+                  <td className="px-4 py-3 font-mono text-xs">{r.inTime ?? r.clockIn ?? r.clock_in ?? '—'}</td>
+                  <td className="px-4 py-3 font-mono text-xs">{r.outTime ?? r.clockOut ?? r.clock_out ?? '—'}</td>
                   <td className="px-4 py-3">{r.totalHours ?? r.total_hours ? `${r.totalHours ?? r.total_hours}h` : '—'}</td>
                   <td className="px-4 py-3">
                     <Badge variant={STATUS_VARIANT[r.status] ?? 'default'}>{r.status ?? 'Unknown'}</Badge>
@@ -328,7 +328,7 @@ function TeamLeavesTab() {
               {leaves.map((l: any) => (
                 <tr key={l.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium">{l.employeeName ?? l.employeeId?.slice(0, 8)}</td>
-                  <td className="px-4 py-3"><Badge variant="info">{l.leaveType ?? l.leave_type}</Badge></td>
+                  <td className="px-4 py-3"><Badge variant="info">{l.leaveName ?? l.leaveType ?? l.leave_type}</Badge></td>
                   <td className="px-4 py-3">{safeDate(l.fromDate ?? l.from_date)}</td>
                   <td className="px-4 py-3">{safeDate(l.toDate ?? l.to_date)}</td>
                   <td className="px-4 py-3">{l.totalDays ?? l.total_days ?? '—'}</td>

@@ -86,13 +86,24 @@ export class RecruitmentService {
   }
 
   async createJob(tenantId: string, userId: string, input: any) {
+    // Resolve companyId — fall back to first company for the tenant if not provided
+    let companyId = input.companyId;
+    if (!companyId) {
+      const company = await queryOne<{ id: string }>('SELECT id FROM companies WHERE tenant_id = ? LIMIT 1', [tenantId]);
+      companyId = company?.id ?? null;
+    }
+    if (!companyId) throw new Error('No company found for tenant');
+
+    // Accept jobType (frontend) as alias for employmentType (backend)
+    const employmentType = input.employmentType ?? input.jobType ?? 'Full-time';
+
     const code = `JOB-${Date.now().toString(36).toUpperCase()}`;
     const id = await insert(
       `INSERT INTO job_postings (id, tenant_id, company_id, requisition_id, posting_code, title, department, location, employment_type, work_mode, min_experience_years, max_experience_years, min_salary, max_salary, description, requirements, skills_required, status, closes_at, created_by)
        VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Draft', ?, ?)`,
-      [tenantId, input.companyId, input.requisitionId, code, input.title, input.department, input.location,
-       input.employmentType || 'Full-time', input.workMode || 'On-site', input.minExperienceYears, input.maxExperienceYears,
-       input.minSalary, input.maxSalary, input.description, input.requirements,
+      [tenantId, companyId, input.requisitionId, code, input.title, input.department, input.location,
+       employmentType, input.workMode || 'On-site', input.minExperienceYears ?? input.experienceMin, input.maxExperienceYears ?? input.experienceMax,
+       input.minSalary ?? input.salaryMin, input.maxSalary ?? input.salaryMax, input.description, input.requirements,
        input.skillsRequired ? JSON.stringify(input.skillsRequired) : null, input.closesAt, userId]
     );
     return queryOne('SELECT * FROM job_postings WHERE id = ?', [id]);
@@ -285,29 +296,39 @@ export class TrainingService {
 
   async listPrograms(tenantId: string, params: any) {
     const { page = 1, limit = 20, status, search } = params;
-    try {
-      let where = 'WHERE tenant_id = ? AND deleted_at IS NULL'; const vals: any[] = [tenantId];
-      if (status) { where += ' AND status = ?'; vals.push(status); }
-      if (search) { where += ' AND (title LIKE ? OR description LIKE ?)'; vals.push(`%${search}%`, `%${search}%`); }
-      const [rows, cnt] = await Promise.all([
-        query(`SELECT * FROM training_programs ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...vals, Number(limit), (Number(page) - 1) * Number(limit)]),
-        query<any>(`SELECT COUNT(*) as total FROM training_programs ${where}`, vals),
-      ]);
-      return this.paginate(rows as any[], cnt as any[], Number(page), Number(limit));
-    } catch { return { data: [], meta: { page: Number(page), limit: Number(limit), total: 0, totalPages: 0 } }; }
+    let where = 'WHERE tenant_id = ?'; const vals: any[] = [tenantId];
+    if (status) { where += ' AND status = ?'; vals.push(status); }
+    if (search) { where += ' AND (program_name LIKE ? OR description LIKE ?)'; vals.push(`%${search}%`, `%${search}%`); }
+    const [rows, cnt] = await Promise.all([
+      query(`SELECT * FROM training_programs ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...vals, Number(limit), (Number(page) - 1) * Number(limit)]),
+      query<any>(`SELECT COUNT(*) as total FROM training_programs ${where}`, vals),
+    ]);
+    return this.paginate(rows as any[], cnt as any[], Number(page), Number(limit));
   }
 
   async createProgram(tenantId: string, userId: string, input: any) {
-    try {
-      const id = await insert(
-        `INSERT INTO training_programs (id, tenant_id, title, description, category, mode, duration_hours, max_participants, trainer_name, start_date, end_date, status, created_by)
-         VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?)`,
-        [tenantId, input.title, input.description ?? null, input.category ?? 'General',
-         input.mode ?? 'Online', input.durationHours ?? null, input.maxParticipants ?? null,
-         input.trainerName ?? null, input.startDate ?? null, input.endDate ?? null, userId]
-      );
-      return queryOne('SELECT * FROM training_programs WHERE id = ?', [id]);
-    } catch { return { id: `tp-${Date.now()}`, ...input, tenantId, status: 'Active', createdAt: new Date().toISOString() }; }
+    // Resolve company
+    let companyId = input.companyId;
+    if (!companyId) {
+      const co = await queryOne<{ id: string }>('SELECT id FROM companies WHERE tenant_id = ? LIMIT 1', [tenantId]);
+      companyId = co?.id ?? null;
+    }
+    if (!companyId) throw new Error('No company found for tenant');
+
+    // Accept frontend aliases
+    const programName = input.programName ?? input.title;
+    const mode = input.mode ?? input.deliveryMode ?? 'Online';
+    const durationDays = input.durationDays ?? (input.durationHours ? Math.ceil(Number(input.durationHours) / 8) : null);
+    const code = `TP-${Date.now().toString(36).toUpperCase()}`;
+
+    const id = await insert(
+      `INSERT INTO training_programs (id, tenant_id, company_id, program_code, program_name, description, category, mode, duration_days, max_participants, location, start_date, end_date, status, created_by)
+       VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?)`,
+      [tenantId, companyId, code, programName, input.description ?? null, input.category ?? 'General',
+       mode, durationDays, input.maxParticipants ?? null, input.location ?? null,
+       input.startDate ?? null, input.endDate ?? null, userId]
+    );
+    return queryOne('SELECT * FROM training_programs WHERE id = ?', [id]);
   }
 
   async deleteProgram(id: string, tenantId: string) {

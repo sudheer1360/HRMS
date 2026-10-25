@@ -196,7 +196,7 @@ function TicketDetail({ ticket, onClose, isAgent }: { ticket: any; onClose: () =
 
   const { data: empData } = useQuery({
     queryKey: ['employees-list'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=200'); return data; },
+    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data; },
     enabled: isAgent,
   });
   const employees: any[] = empData?.data ?? [];

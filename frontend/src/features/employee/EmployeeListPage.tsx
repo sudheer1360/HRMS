@@ -210,7 +210,7 @@ export default function EmployeeListPage() {
         title="Delete Employee"
         message="Are you sure you want to delete this employee? This action cannot be undone."
         onConfirm={() => confirmDeleteId && deleteMutation.mutate(confirmDeleteId)}
-        onCancel={() => setConfirmDeleteId(null)}
+        onClose={() => setConfirmDeleteId(null)}
       />
     </div>
   );

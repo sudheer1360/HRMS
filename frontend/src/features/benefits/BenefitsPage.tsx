@@ -289,7 +289,7 @@ function ClaimsTab() {
               <Button onClick={handleSubmit(d => mutation.mutate(d))} disabled={mutation.isPending}>
                 {mutation.isPending ? <Spinner size="sm" /> : <><Send className="w-3.5 h-3.5 mr-1.5" />Submit Claim</>}
               </Button>
-              <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
             </div>
           </div>
         </div>
@@ -338,7 +338,7 @@ type DepForm = z.infer<typeof depSchema>;
 
 function DependentsTab() {
   const [showForm, setShowForm] = React.useState(false);
-  const [dependents, setDependents] = React.useState(FALLBACK_DEPENDENTS);
+  const [dependents, setDependents] = React.useState<{ id: string; name: string; relation: string; dob: string; aadhar?: string; coveredUnderPlan: string; }[]>(FALLBACK_DEPENDENTS);
   const [success, setSuccess] = React.useState(false);
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<DepForm>({
@@ -388,7 +388,7 @@ function DependentsTab() {
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSubmit(onSubmit)}>Add Dependent</Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
           </div>
         </div>
       )}

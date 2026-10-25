@@ -429,7 +429,7 @@ function InterviewsTab() {
 
   const { data: candidates } = useQuery({
     queryKey: ['candidates-list'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/candidates?limit=200'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await api.get('/recruitment/candidates?limit=100'); return data.data ?? []; },
   });
 
   const { register: regI, handleSubmit: hsI, reset: resetI, formState: { errors: errI } } = useForm({
@@ -598,10 +598,10 @@ function OffersTab() {
 
   const { data: candidates } = useQuery({
     queryKey: ['candidates-list'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/candidates?status=Active&limit=200'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await api.get('/recruitment/candidates?status=Active&limit=100'); return data.data ?? []; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(offerSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof offerSchema>>({ resolver: zodResolver(offerSchema) });
 
   const createMutation = useMutation({
     mutationFn: (d: any) => api.post('/recruitment/offers', d),

@@ -172,7 +172,7 @@ function ProfileTab() {
     queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(profileSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema) });
 
   React.useEffect(() => {
     if (profile && editing) {
@@ -461,7 +461,7 @@ function NotificationsTab() {
   const notifications = leaves.map((l: any) => ({
     id: l.id,
     type: l.status === 'Approved' ? 'success' : l.status === 'Rejected' ? 'danger' : 'info',
-    message: `Leave request (${l.leaveType ?? l.leave_type}) ${l.status === 'Pending' ? 'submitted and pending approval' : l.status.toLowerCase()}`,
+    message: `Leave request (${l.leaveName ?? l.leaveType ?? l.leave_type ?? 'Leave'}) ${l.status === 'Pending' ? 'submitted and pending approval' : l.status.toLowerCase()}`,
     date: l.updatedAt ?? l.created_at ?? l.fromDate ?? l.from_date,
   }));
 

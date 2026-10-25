@@ -60,7 +60,7 @@ function ExitRequestsTab() {
     queryFn: async () => { const { data } = await api.get('/extended/exit/requests?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof exitRequestSchema>>({
     resolver: zodResolver(exitRequestSchema),
     defaultValues: { separationType: 'Resignation', noticePeriodDays: 30 },
   });
@@ -351,7 +351,7 @@ function ExitInterviewsTab() {
     queryFn: async () => { const { data } = await api.get('/extended/exit/interviews?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof interviewSchema>>({
     resolver: zodResolver(interviewSchema),
     defaultValues: { wouldRejoin: 'Yes', recommendToOthers: 'Yes', overallSatisfaction: 3 },
   });

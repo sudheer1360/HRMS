@@ -509,7 +509,7 @@ function LocksTab() {
     queryKey: ['my-profile'],
     queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
   });
-  const companyId = profile?.companyId ?? profile?.company_id ?? '00000000-0000-0000-0000-000000000001';
+  const companyId = profile?.companyId ?? profile?.company_id ?? '';
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-locks', companyId],

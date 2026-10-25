@@ -130,10 +130,16 @@ function ShiftsTab() {
   const [confirmId, setConfirmId] = React.useState<string | null>(null);
   const [editItem, setEditItem] = React.useState<any>(null);
 
-  const companyId = '00000000-0000-0000-0000-000000000001';
+  // Fetch real companyId from auth profile instead of using a hardcoded UUID
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile'],
+    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+  });
+  const companyId = profile?.companyId ?? profile?.company_id ?? '';
 
   const { data, isLoading } = useQuery({
     queryKey: ['shifts', companyId],
+    enabled: !!companyId,
     queryFn: async () => { const { data } = await api.get(`/shifts/shifts/${companyId}`); return data.data ?? []; },
   });
 
@@ -237,6 +243,14 @@ function ShiftsTab() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
+        message="Delete this shift?"
+        confirmLabel="Delete"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -253,10 +267,19 @@ const rosterSchema = z.object({
 function RostersTab() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = React.useState(false);
+  const [confirmId, setConfirmId] = React.useState<string | null>(null);
+
+  // Fetch real companyId from auth profile instead of using a hardcoded UUID
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile'],
+    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+  });
+  const companyId = profile?.companyId ?? profile?.company_id ?? '';
 
   const { data: shiftsData } = useQuery({
-    queryKey: ['shifts', '00000000-0000-0000-0000-000000000001'],
-    queryFn: async () => { const { data } = await api.get('/shifts/shifts/00000000-0000-0000-0000-000000000001'); return data.data ?? []; },
+    queryKey: ['shifts', companyId],
+    enabled: !!companyId,
+    queryFn: async () => { const { data } = await api.get(`/shifts/shifts/${companyId}`); return data.data ?? []; },
   });
 
   const { data, isLoading } = useQuery({
@@ -264,7 +287,7 @@ function RostersTab() {
     queryFn: async () => { const { data } = await api.get('/shifts/rosters?limit=50'); return data.data ?? []; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(rosterSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof rosterSchema>>({ resolver: zodResolver(rosterSchema) });
 
   const saveMutation = useMutation({
     mutationFn: (d: any) => api.post('/shifts/rosters', d),
@@ -330,7 +353,7 @@ function RostersTab() {
                     <td className="px-4 py-3">{safeDate(r.effectiveTo ?? r.effective_to)}</td>
                     <td className="px-4 py-3"><Badge variant={active ? 'success' : 'default'}>{active ? 'Active' : 'Inactive'}</Badge></td>
                     <td className="px-4 py-3">
-                      <button onClick={() => setConfirmId(s.id)} className="p-1.5 rounded hover:bg-red-50 hover:text-danger"><Trash2 size={13} /></button>
+                      <button onClick={() => setConfirmId(r.id)} className="p-1.5 rounded hover:bg-red-50 hover:text-danger"><Trash2 size={13} /></button>
                     </td>
                   </tr>
                 );
@@ -343,6 +366,14 @@ function RostersTab() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
+        message="Delete this roster?"
+        confirmLabel="Delete"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -369,7 +400,7 @@ function OvertimeTab() {
     queryFn: async () => { const { data } = await api.get('/shifts/overtime?status=Pending&limit=50'); return data.data ?? []; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(otSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof otSchema>>({ resolver: zodResolver(otSchema) });
 
   const submitMutation = useMutation({
     mutationFn: (d: any) => api.post('/shifts/overtime', d),
@@ -516,14 +547,6 @@ export default function ShiftRosterPage() {
       {tab === 'shifts'  && <ShiftsTab />}
       {tab === 'rosters' && <RostersTab />}
       {tab === 'ot'      && <OvertimeTab />}
-      <ConfirmDialog
-        open={!!confirmId}
-        onClose={() => setConfirmId(null)}
-        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
-        message="Delete this item?"
-        confirmLabel="Delete"
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }

@@ -175,6 +175,14 @@ function ProgramsTab() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
+        message="Delete this training program? This action cannot be undone."
+        confirmLabel="Delete Program"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -204,7 +212,7 @@ function SessionsTab() {
     queryFn: async () => { const { data } = await api.get('/recruitment/training/sessions?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(sessionSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof sessionSchema>>({ resolver: zodResolver(sessionSchema) });
 
   const createMutation = useMutation({
     mutationFn: (d: any) => api.post('/recruitment/training/sessions', d),
@@ -292,7 +300,7 @@ function MyTrainingTab() {
     queryFn: async () => { const { data } = await api.get('/recruitment/training/my-training?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset } = useForm({ resolver: zodResolver(feedbackSchema) });
+  const { register, handleSubmit, reset } = useForm<z.infer<typeof feedbackSchema>>({ resolver: zodResolver(feedbackSchema) });
 
   const feedbackMutation = useMutation({
     mutationFn: ({ id, feedback }: { id: string; feedback: any }) => api.post(`/recruitment/training/sessions/${id}/feedback`, feedback),
@@ -469,7 +477,7 @@ function CertificationsTab() {
     queryFn: async () => { const { data } = await api.get('/recruitment/training/certifications?limit=50'); return data; },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(certSchema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof certSchema>>({ resolver: zodResolver(certSchema) });
 
   const createMutation = useMutation({
     mutationFn: (d: any) => api.post('/recruitment/training/certifications', d),
@@ -566,14 +574,6 @@ export default function TrainingPage() {
       {tab === 'my'       && <MyTrainingTab />}
       {tab === 'skills'   && <SkillMatrixTab />}
       {tab === 'certs'    && <CertificationsTab />}
-      <ConfirmDialog
-        open={!!confirmId}
-        onClose={() => setConfirmId(null)}
-        onConfirm={() => { deleteMutation.mutate(confirmId!); setConfirmId(null); }}
-        message="Delete this training program? This action cannot be undone."
-        confirmLabel="Delete Program"
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }
