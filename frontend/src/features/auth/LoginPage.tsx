@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { setCredentials } from '@store/slices/authSlice';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
-import api from '@lib/axios';
+import { authService } from '@features/../services/auth.service';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -30,8 +30,7 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await api.post('/auth/login', data);
-      const result = response.data;
+      const result = await authService.login(data);
 
       if (result.data?.mfaRequired) {
         navigate('/mfa', { state: { sessionToken: result.data.sessionToken } });

@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import { config } from './config/index.js';
 import { requestId, errorHandler } from './middleware/errorHandler.js';
 import { tenantResolver } from './middleware/tenant.js';
+import { beforeRequest, apiVersionHeader } from './middleware/beforeRequest.js';
 import logger from './config/logger.js';
 
 // Import routes
@@ -32,8 +33,10 @@ const app = express();
 
 // ─── Global Middleware ──────────────────────────────────────────
 
-// Request ID
+// Request ID (from errorHandler) + beforeRequest (timing, Content-Type guard, perf logging)
 app.use(requestId);
+app.use(beforeRequest);
+app.use(apiVersionHeader('v1'));
 
 // Security
 app.use(helmet());

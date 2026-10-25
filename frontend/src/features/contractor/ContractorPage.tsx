@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { contractorService } from '@features/../services/contractor.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -72,7 +72,7 @@ function ContractorsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['contractors'],
-    queryFn: async () => { const { data } = await api.get('/extended/contractors?limit=50'); return data; },
+    queryFn: async () => { const { data } = await contractorService.list({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof contractorSchema>>({
@@ -81,12 +81,12 @@ function ContractorsTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => editId ? api.put(`/extended/contractors/${editId}`, d) : api.post('/extended/contractors', d),
+    mutationFn: (d: any) => editId ? contractorService.update(editId, d) : contractorService.create(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['contractors'] }); reset(); setShowForm(false); setEditId(null); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/extended/contractors/${id}`),
+    mutationFn: (id: string) => contractorService.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contractors'] }),
   });
 
@@ -219,12 +219,12 @@ function WorkersTab() {
 
   const { data: contractors } = useQuery({
     queryKey: ['contractors'],
-    queryFn: async () => { const { data } = await api.get('/extended/contractors?limit=50'); return data; },
+    queryFn: async () => { const { data } = await contractorService.list({ limit: 50 }); return data; },
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['contractor-workers'],
-    queryFn: async () => { const { data } = await api.get('/extended/contractors/workers?limit=100'); return data; },
+    queryFn: async () => { const { data } = await contractorService.listWorkers('all'); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof workerSchema>>({
@@ -233,7 +233,7 @@ function WorkersTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/contractors/workers', d),
+    mutationFn: (d: any) => contractorService.addWorker(d.contractorId, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['contractor-workers'] }); reset(); setShowForm(false); },
   });
 
@@ -308,7 +308,7 @@ function ContractorAttendanceTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['contractor-attendance', date],
-    queryFn: async () => { const { data } = await api.get(`/extended/contractors/attendance?date=${date}&limit=100`); return data; },
+    queryFn: async () => { const { data } = await contractorService.listAttendance({ date, limit: 100 }); return data; },
   });
 
   const list: any[] = data?.data ?? [];
@@ -377,23 +377,23 @@ function BillingTab() {
 
   const { data: contractors } = useQuery({
     queryKey: ['contractors'],
-    queryFn: async () => { const { data } = await api.get('/extended/contractors?limit=50'); return data; },
+    queryFn: async () => { const { data } = await contractorService.list({ limit: 50 }); return data; },
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['contractor-invoices'],
-    queryFn: async () => { const { data } = await api.get('/extended/contractors/invoices?limit=50'); return data; },
+    queryFn: async () => { const { data } = await contractorService.listInvoices('all'); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof invoiceSchema>>({ resolver: zodResolver(invoiceSchema) });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/contractors/invoices', d),
+    mutationFn: (d: any) => contractorService.createInvoice(d.contractorId, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['contractor-invoices'] }); reset(); setShowForm(false); },
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/extended/contractors/invoices/${id}/approve`),
+    mutationFn: (id: string) => contractorService.approveInvoice('', id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contractor-invoices'] }),
   });
 
@@ -489,7 +489,7 @@ function ComplianceTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['contractor-compliance'],
-    queryFn: async () => { const { data } = await api.get('/extended/contractors/compliance?limit=100'); return data; },
+    queryFn: async () => { const { data } = await contractorService.getCompliance('all'); return data; },
   });
 
   const list: any[] = data?.data ?? [];

@@ -26,7 +26,7 @@ export class ComplianceService {
         [tenantId, input.title, input.description ?? null, input.eventType ?? 'Regulatory',
          input.dueDate, input.frequency ?? 'One-time', userId]
       );
-      return queryOne('SELECT * FROM compliance_events WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM compliance_events WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `ce-${Date.now()}`, ...input, tenantId, status: 'Pending', createdAt: new Date().toISOString() }; }
   }
 
@@ -50,7 +50,7 @@ export class ComplianceService {
         [tenantId, input.filingType, input.period, input.filingDate ?? new Date().toISOString().split('T')[0],
          input.dueDate ?? null, input.amountPaid ?? null, input.referenceNumber ?? null, userId]
       );
-      return queryOne('SELECT * FROM compliance_filings WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM compliance_filings WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `cf-${Date.now()}`, ...input, tenantId, status: 'Filed', createdAt: new Date().toISOString() }; }
   }
 
@@ -82,7 +82,7 @@ export class ComplianceService {
     try {
       await query('UPDATE compliance_checklist SET status = ?, completed_at = NOW(), updated_at = NOW() WHERE id = ? AND tenant_id = ?',
         [input.status, id, tenantId]);
-      return queryOne('SELECT * FROM compliance_checklist WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM compliance_checklist WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id, ...input }; }
   }
 
@@ -106,7 +106,7 @@ export class ComplianceService {
         [tenantId, input.documentName, input.documentType ?? 'License',
          input.issuedDate ?? null, input.expiryDate ?? null, input.issuingAuthority ?? null, userId]
       );
-      return queryOne('SELECT * FROM compliance_documents WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM compliance_documents WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `cd-${Date.now()}`, ...input, tenantId, status: 'Active', createdAt: new Date().toISOString() }; }
   }
 }

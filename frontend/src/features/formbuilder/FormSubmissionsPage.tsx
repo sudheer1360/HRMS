@@ -5,7 +5,7 @@ import { ArrowLeft, FileText } from 'lucide-react';
 import { Badge, Spinner } from '@components/ui/Input';
 import { Button } from '@components/ui/Button';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { formbuilderService } from '@features/../services/formbuilder.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 interface Submission {
@@ -24,12 +24,12 @@ interface FormMeta {
 }
 
 async function getForm(id: string): Promise<FormMeta> {
-  const { data } = await api.get<{ data: FormMeta }>(`/extended/forms/${id}`);
+  const { data } = await formbuilderService.getById(id);
   return data.data;
 }
 
 async function getSubmissions(id: string): Promise<Submission[]> {
-  const { data } = await api.get<{ data: Submission[] }>(`/extended/forms/${id}/submissions`);
+  const { data } = await formbuilderService.listSubmissions(id);
   return data.data ?? [];
 }
 

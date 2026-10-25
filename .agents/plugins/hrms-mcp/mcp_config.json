@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "mysql": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@database-mcp/mysql",
+        "--dsn",
+        "mysql://root:hrms_password@127.0.0.1:3307/hrms"
+      ]
+    },
+    "redis": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@liangshanli/mcp-server-redis"
+      ],
+      "env": {
+        "REDIS_HOST": "127.0.0.1",
+        "REDIS_PORT": "6379",
+        "REDIS_PASSWORD": "redis_password"
+      }
+    }
+  }
+}

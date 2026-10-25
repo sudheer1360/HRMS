@@ -11,7 +11,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { complianceService } from '@features/../services/compliance.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ function ComplianceCalendarTab() {
   const { data } = useQuery({
     queryKey: ['compliance-calendar'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compliance/calendar?limit=50'); return data; }
+      try { const { data } = await complianceService.listCalendar({ limit: 50 }); return data; }
       catch { return { data: FB_CALENDAR }; }
     },
   });
@@ -226,7 +226,7 @@ function FilingsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['statutory-filings'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compliance/filings?limit=50'); return data; }
+      try { const { data } = await complianceService.listFilings({ limit: 50 }); return data; }
       catch { return { data: FB_FILINGS }; }
     },
   });
@@ -235,14 +235,14 @@ function FilingsTab() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof filingSchema>>({ resolver: zodResolver(filingSchema) });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/compliance/filings', d),
+    mutationFn: (d: any) => complianceService.createFiling(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['statutory-filings'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
 
   const markFiledMut = useMutation({
     mutationFn: ({ id, challanNo }: { id: string; challanNo: string }) =>
-      api.patch(`/compliance/filings/${id}/mark-filed`, { challanNo }),
+      complianceService.markFiled(id, challanNo),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['statutory-filings'] }),
   });
 
@@ -366,7 +366,7 @@ function StatutoryReportsTab() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['statutory-reports'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compliance/reports?limit=30'); return data; }
+      try { const { data } = await complianceService.listReports({ limit: 30 }); return data; }
       catch { return { data: FB_REPORTS }; }
     },
   });
@@ -378,7 +378,7 @@ function StatutoryReportsTab() {
   async function handleGenerate(id: string) {
     setGenerating(id);
     try {
-      await api.post(`/compliance/reports/${id}/generate`);
+      await complianceService.generateReport(id);
       refetch();
     } catch { /* fallback */ }
     finally { setTimeout(() => setGenerating(null), 1500); }
@@ -470,7 +470,7 @@ function AuditChecklistTab() {
   const { data } = useQuery({
     queryKey: ['compliance-checklist'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compliance/checklist?limit=50'); return data; }
+      try { const { data } = await complianceService.listChecklist({ limit: 50 }); return data; }
       catch { return { data: FB_CHECKLIST }; }
     },
   });
@@ -487,7 +487,7 @@ function AuditChecklistTab() {
 
   const toggleItem = async (id: string) => {
     setLocalItems(prev => prev.map(i => i.id === id ? { ...i, completed: !i.completed, completedDate: !i.completed ? new Date().toISOString().split('T')[0] : null } : i));
-    try { await api.patch(`/compliance/checklist/${id}/toggle`); } catch { /* optimistic */ }
+    try { await complianceService.toggleChecklistItem(id); } catch { /* optimistic */ }
   };
 
   const addItem = () => {
@@ -610,7 +610,7 @@ function DocumentComplianceTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['document-compliance'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compliance/documents?limit=50'); return data; }
+      try { const { data } = await complianceService.listDocuments({ limit: 50 }); return data; }
       catch { return { data: FB_DOCUMENTS }; }
     },
   });

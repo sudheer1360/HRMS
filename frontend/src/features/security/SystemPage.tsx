@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { governanceService } from '@features/../services/governance.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ function AuditLogsTab() {
     queryFn: async () => {
       const p = new URLSearchParams({ page: String(page), limit: '25' });
       if (entityFilter) p.set('entity', entityFilter);
-      const { data } = await api.get<{ data: any[]; meta: any }>(`/extended/governance/audit-logs?${p}`);
+      const { data } = await governanceService.listAuditLogs(Object.fromEntries(new URLSearchParams(p)));
       return data;
     },
   });
@@ -147,7 +147,7 @@ function LoginSessionsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['login-sessions'],
     queryFn: async () => {
-      const { data } = await api.get<{ data: any[] }>('/extended/governance/sessions');
+      const { data } = await governanceService.listSessions();
       return data.data ?? [];
     },
   });
@@ -216,17 +216,17 @@ export default function SystemPage() {
 
   const { data: health } = useQuery({
     queryKey: ['system-health'],
-    queryFn: async () => { const { data } = await api.get('/extended/governance/health'); return data.data; },
+    queryFn: async () => { const { data } = await governanceService.getHealth(); return data.data; },
     enabled: tab === 'health',
   });
   const { data: scope } = useQuery({
     queryKey: ['scope-status'],
-    queryFn: async () => { const { data } = await api.get('/extended/governance/scope'); return data.data; },
+    queryFn: async () => { const { data } = await governanceService.getScope(); return data.data; },
     enabled: tab === 'scope',
   });
   const { data: flags } = useQuery({
     queryKey: ['feature-flags'],
-    queryFn: async () => { const { data } = await api.get('/extended/governance/feature-flags'); return data.data; },
+    queryFn: async () => { const { data } = await governanceService.getFeatureFlags(); return data.data; },
     enabled: tab === 'flags',
   });
 

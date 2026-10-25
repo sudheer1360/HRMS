@@ -11,7 +11,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { recruitmentService } from '@features/../services/recruitment.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ function OffersTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['offer-joining-offers'],
     queryFn: async () => {
-      try { const { data } = await api.get('/recruitment/offers?limit=50'); return data; }
+      try { const { data } = await recruitmentService.listOffers({ limit: 50 }); return data; }
       catch { return { data: FB_OFFERS }; }
     },
   });
@@ -157,14 +157,14 @@ function OffersTab() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof offerSchema>>({ resolver: zodResolver(offerSchema) });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/offers', d),
+    mutationFn: (d: any) => recruitmentService.createOffer(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['offer-joining-offers'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
 
   const statusMut = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      api.patch(`/recruitment/offers/${id}/status`, { status }),
+      recruitmentService.updateOfferStatus(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['offer-joining-offers'] }),
   });
 
@@ -315,7 +315,7 @@ function SalaryFitmentTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['salary-fitments'],
     queryFn: async () => {
-      try { const { data } = await api.get('/recruitment/salary-fitments?limit=20'); return data; }
+      try { const { data } = await recruitmentService.listSalaryFitments({ limit: 20 }); return data; }
       catch { return { data: FB_SALARY_FITMENTS }; }
     },
   });
@@ -425,7 +425,7 @@ function JoiningFormalitiesTab() {
   const { data } = useQuery({
     queryKey: ['joining-formalities'],
     queryFn: async () => {
-      try { const { data } = await api.get('/recruitment/joining-formalities?limit=20'); return data; }
+      try { const { data } = await recruitmentService.listJoiningFormalities({ limit: 20 }); return data; }
       catch { return { data: FB_JOINING }; }
     },
   });
@@ -441,7 +441,7 @@ function JoiningFormalitiesTab() {
         ? { ...c, done: !c.done, doneDate: !c.done ? new Date().toISOString().split('T')[0] : null }
         : c)
     } : f));
-    api.patch(`/recruitment/joining-formalities/${formId}/tasks/${taskId}/toggle`).catch(() => {/* optimistic */});
+    recruitmentService.toggleJoiningTask(formId, taskId).catch(() => {/* optimistic */});
   }
 
   const ownerColor = (o: string) =>
@@ -541,7 +541,7 @@ function AppointmentLettersTab() {
   const { data } = useQuery({
     queryKey: ['appointment-letters'],
     queryFn: async () => {
-      try { const { data } = await api.get('/recruitment/appointment-letters?limit=30'); return data; }
+      try { const { data } = await recruitmentService.listAppointmentLetters({ limit: 30 }); return data; }
       catch { return { data: FB_APPT_LETTERS }; }
     },
   });
@@ -549,7 +549,7 @@ function AppointmentLettersTab() {
 
   async function handleGenerate(id: string) {
     setGenerating(id);
-    try { await api.post(`/recruitment/appointment-letters/${id}/generate`); }
+    try { await recruitmentService.generateAppointmentLetter(id); }
     catch { /* optimistic */ }
     setLocalLetters(prev => prev.map(l => l.id === id ? { ...l, status: 'Issued', generatedDate: new Date().toISOString().split('T')[0] } : l));
     setTimeout(() => setGenerating(null), 1200);

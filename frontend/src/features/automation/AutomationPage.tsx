@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { Input, Spinner } from '@components/ui/Input';
-import api from '@lib/axios';
+import { automationService } from '@features/../services/platform.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Types & Constants ─────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ function WorkflowCard({ wf, onToggle }: { wf: any; onToggle: (id: string, active
       setExpanded(true);
       setLoadingLogs(true);
       try {
-        const { data } = await api.get(`/platform/automation/workflows/${wf.id}/logs`);
+        const { data } = await automationService.listWorkflowLogs(wf.id);
         setLogs(data.data ?? []);
       } catch {
         setLogs([
@@ -207,14 +207,14 @@ function WorkflowsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['workflows'],
     queryFn: async () => {
-      try { const { data } = await api.get('/platform/automation/workflows'); return data; }
+      try { const { data } = await automationService.listWorkflows(); return data; }
       catch { return { data: FALLBACK_WORKFLOWS }; }
     },
   });
 
   const toggleMut = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      api.patch(`/platform/automation/workflows/${id}`, { isActive: active }),
+      automationService.toggleWorkflow(id, active),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workflows'] }),
   });
 
@@ -290,7 +290,7 @@ function BuilderTab() {
   });
 
   const mutation = useMutation({
-    mutationFn: (d: BuilderForm) => api.post('/platform/automation/workflows', {
+    mutationFn: (d: BuilderForm) => automationService.createWorkflow({
       ...d, isActive: true, actions,
     }).then(r => r.data),
     onSuccess: (data) => {
@@ -394,7 +394,7 @@ function LogsTab() {
   const { data: wfData } = useQuery({
     queryKey: ['workflows'],
     queryFn: async () => {
-      try { const { data } = await api.get('/platform/automation/workflows'); return data; }
+      try { const { data } = await automationService.listWorkflows(); return data; }
       catch { return { data: FALLBACK_WORKFLOWS }; }
     },
   });
@@ -407,7 +407,7 @@ function LogsTab() {
     enabled: !!selectedWf,
     queryFn: async () => {
       try {
-        const { data } = await api.get(`/platform/automation/workflows/${selectedWf}/logs`);
+        const { data } = await automationService.listWorkflowLogs(selectedWf);
         return data;
       } catch {
         return { data: [

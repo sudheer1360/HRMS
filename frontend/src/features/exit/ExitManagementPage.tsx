@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { exitService } from '@features/../services/exit.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ function ExitRequestsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['exit-requests'],
-    queryFn: async () => { const { data } = await api.get('/extended/exit/requests?limit=50'); return data; },
+    queryFn: async () => { const { data } = await exitService.list({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof exitRequestSchema>>({
@@ -66,13 +66,13 @@ function ExitRequestsTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/exit/requests', d),
+    mutationFn: (d: any) => exitService.initiate(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exit-requests'] }); reset(); setShowForm(false); },
   });
 
   const approveMutation = useMutation({
     mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
-      api.patch(`/extended/exit/requests/${id}/${action}`),
+      exitService.approve(id, { action }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exit-requests'] }),
   });
 
@@ -167,12 +167,12 @@ function ClearanceTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['exit-clearances'],
-    queryFn: async () => { const { data } = await api.get('/extended/exit/clearances?limit=50'); return data; },
+    queryFn: async () => { const { data } = await exitService.listClearances('all'); return data; },
   });
 
   const clearDeptMutation = useMutation({
     mutationFn: ({ exitId, dept }: { exitId: string; dept: string }) =>
-      api.patch(`/extended/exit/clearances/${exitId}/clear`, { department: dept }),
+      exitService.updateClearance(exitId, 'clear', { department: dept }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exit-clearances'] }),
   });
 
@@ -239,11 +239,11 @@ function FnFTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['fnf-settlements'],
-    queryFn: async () => { const { data } = await api.get('/extended/exit/fnf?limit=50'); return data; },
+    queryFn: async () => { const { data } = await exitService.getFnf('all'); return data; },
   });
 
   const processMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/extended/exit/fnf/${id}/process`),
+    mutationFn: (id: string) => exitService.processFnf(id, {}),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fnf-settlements'] }),
   });
 
@@ -343,12 +343,12 @@ function ExitInterviewsTab() {
 
   const { data: exits } = useQuery({
     queryKey: ['exit-requests'],
-    queryFn: async () => { const { data } = await api.get('/extended/exit/requests?limit=50'); return data; },
+    queryFn: async () => { const { data } = await exitService.list({ limit: 50 }); return data; },
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['exit-interviews'],
-    queryFn: async () => { const { data } = await api.get('/extended/exit/interviews?limit=50'); return data; },
+    queryFn: async () => { const { data } = await exitService.listInterviews({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof interviewSchema>>({
@@ -357,7 +357,7 @@ function ExitInterviewsTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/exit/interviews', { ...d, wouldRejoin: d.wouldRejoin === 'Yes', recommendToOthers: d.recommendToOthers === 'Yes' }),
+    mutationFn: (d: any) => exitService.submitInterview({ ...d, wouldRejoin: d.wouldRejoin === 'Yes', recommendToOthers: d.recommendToOthers === 'Yes' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exit-interviews'] }); reset(); setShowForm(false); },
   });
 

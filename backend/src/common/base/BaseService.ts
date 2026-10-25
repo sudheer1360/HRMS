@@ -1,13 +1,41 @@
 /**
- * BaseService — Abstract base for all HRMS service classes.
+ * BaseService — Abstract base for all HRMS service / manager classes.
  *
- * Provides reusable helpers so every service keeps DRY:
- *  - buildPagination()        → normalised page/limit/offset from query params
- *  - buildPaginatedMeta()     → standard meta object for list responses
- *  - buildUpdateFields()      → { fields[], vals[] } for dynamic UPDATE queries
- *  - sanitiseSortColumn()     → safe ORDER BY column whitelisting
+ * Extended with the Backend Structure's AbstractManager pattern:
+ *
+ *   this.logging   → LoggingHandler   (structured pino logging)
+ *   this.cache     → CacheManager    (Redis get/set/invalidate)
+ *   this.common    → CommonHandler    (validators, maskers, utilities)
+ *
+ * Core helpers retained (unchanged):
+ *   buildPagination()     → normalised page/limit/offset
+ *   buildPaginatedMeta()  → standard meta block
+ *   buildUpdateFields()   → dynamic UPDATE clause fragments
+ *   sanitiseSortColumn()  → whitelist ORDER BY column
+ *   sanitiseSortOrder()   → 'ASC' | 'DESC'
+ *
+ * New manager helpers added:
+ *   withCache()           → get-or-set shorthand with key builder
+ *   invalidateTenantCache() → flush all keys for a tenant module
+ *   logAction()           → structured audit-style log
  */
+import { LoggingHandler } from '../utils/LoggingHandler.js';
+import { CacheManager } from '../utils/CacheManager.js';
+import { CommonHandler } from '../utils/CommonHandler.js';
+
 export abstract class BaseService {
+  // ── Handler utilities (Backend Structure AbstractManager pattern) ──────────
+
+  protected readonly logging: LoggingHandler;
+  protected readonly cache: CacheManager;
+  protected readonly common: CommonHandler;
+
+  constructor() {
+    this.logging = new LoggingHandler();
+    this.cache = new CacheManager();
+    this.common = new CommonHandler();
+  }
+
   // ── Pagination ────────────────────────────────────────────────────────────
 
   protected buildPagination(params: Record<string, any>): {
@@ -82,5 +110,83 @@ export abstract class BaseService {
    */
   protected sanitiseSortOrder(order: string | undefined): 'ASC' | 'DESC' {
     return order?.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  }
+
+  // ── Cache helpers (AbstractManager pattern) ───────────────────────────────
+
+  /**
+   * Standard cache key builder for tenant-scoped data.
+   * Format: `{module}:{tenantId}:{resource}:{...rest}`
+   *
+   * @example
+   *   const key = this.cacheKey('employees', tenantId, 'list', page, limit);
+   *   // → "employees:tenant123:list:1:20"
+   */
+  protected cacheKey(
+    module: string,
+    tenantId: string,
+    ...rest: (string | number)[]
+  ): string {
+    return [module, tenantId, ...rest].join(':');
+  }
+
+  /**
+   * Invalidate all cached data for a module in a given tenant.
+   * Call after any write operation (create/update/delete).
+   *
+   * @example
+   *   await this.invalidateTenantCache('employees', tenantId);
+   *   // Deletes all keys matching "employees:{tenantId}:*"
+   */
+  protected async invalidateTenantCache(
+    module: string,
+    tenantId: string
+  ): Promise<void> {
+    const count = await this.cache.invalidatePattern(`${module}:${tenantId}:*`);
+    this.logging.debug(
+      `${module}.service`,
+      `Invalidated ${count} cache keys for tenant ${tenantId}`
+    );
+  }
+
+  /**
+   * Get-or-set cache helper.  Runs `fn` only on a cache miss.
+   *
+   * @example
+   *   const list = await this.withCache(
+   *     this.cacheKey('employees', tenantId, 'list', page),
+   *     300,
+   *     () => this.fetchFromDb(tenantId, page)
+   *   );
+   */
+  protected withCache<T>(
+    key: string,
+    ttlSeconds: number,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    return this.cache.remember(key, ttlSeconds, fn);
+  }
+
+  // ── Audit / logging helpers ───────────────────────────────────────────────
+
+  /**
+   * Log a business action in a structured, audit-friendly format.
+   *
+   * @example
+   *   this.logAction('employee.service', 'CREATE_EMPLOYEE', tenantId, userId, { employeeId: id });
+   */
+  protected logAction(
+    module: string,
+    action: string,
+    tenantId: string,
+    performedBy: string,
+    context?: Record<string, unknown>
+  ): void {
+    this.logging.info(module, `ACTION: ${action}`, {
+      action,
+      tenantId,
+      performedBy,
+      ...context,
+    });
   }
 }

@@ -30,7 +30,7 @@ export class TravelService {
         [tenantId, userId, code, input.destination, input.purpose, input.departureDate,
          input.returnDate, input.travelMode || 'Air', input.estimatedCost ?? 0, userId]
       );
-      return queryOne('SELECT * FROM travel_requests WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM travel_requests WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `tr-${Date.now()}`, ...input, tenantId, employeeId: userId, status: 'Pending', createdAt: new Date().toISOString() }; }
   }
 
@@ -38,7 +38,7 @@ export class TravelService {
     try {
       await query('UPDATE travel_requests SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?',
         [input.status, id, tenantId]);
-      return queryOne('SELECT * FROM travel_requests WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM travel_requests WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id, ...input }; }
   }
 
@@ -60,7 +60,7 @@ export class TravelService {
     try {
       await query('UPDATE travel_expenses SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?',
         [input.status, id, tenantId]);
-      return queryOne('SELECT * FROM travel_expenses WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM travel_expenses WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id, ...input }; }
   }
 
@@ -72,7 +72,7 @@ export class TravelService {
          VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?)`,
         [tenantId, userId, code, input.travelRequestId ?? null, input.category, input.description, input.amount, input.receiptDate, userId]
       );
-      return queryOne('SELECT * FROM travel_expenses WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM travel_expenses WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `exp-${Date.now()}`, ...input, tenantId, employeeId: userId, status: 'Pending', createdAt: new Date().toISOString() }; }
   }
 
@@ -98,7 +98,7 @@ export class TravelService {
          VALUES (UUID(), ?, ?, ?, ?, ?, ?, 'Requested', ?)`,
         [tenantId, userId, code, input.travelRequestId ?? null, input.purpose, input.amount, userId]
       );
-      return queryOne('SELECT * FROM travel_advances WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM travel_advances WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `adv-${Date.now()}`, ...input, tenantId, employeeId: userId, status: 'Requested', createdAt: new Date().toISOString() }; }
   }
 }

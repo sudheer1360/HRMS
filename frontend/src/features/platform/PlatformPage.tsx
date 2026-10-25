@@ -4,7 +4,7 @@ import { MessageCircle, Bot, Zap, BarChart3, Webhook, Send, Plus } from 'lucide-
 import { Button } from '@components/ui/Button';
 import { Input, Badge } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { helpdeskService, aiService, automationService, reportsService, integrationService } from '@features/../services/platform.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 export default function PlatformPage() {
@@ -13,15 +13,15 @@ export default function PlatformPage() {
   const [aiResponse, setAiResponse] = React.useState<any>(null);
   const queryClient = useQueryClient();
 
-  const { data: tickets } = useQuery({ queryKey: ['my-tickets'], queryFn: async () => { const { data } = await api.get('/platform/tickets/my?limit=30'); return data; }, enabled: tab === 'helpdesk' });
-  const { data: conversations } = useQuery({ queryKey: ['ai-conversations'], queryFn: async () => { const { data } = await api.get('/platform/ai/conversations'); return data; }, enabled: tab === 'ai' });
-  const { data: workflows } = useQuery({ queryKey: ['workflows'], queryFn: async () => { const { data } = await api.get('/platform/automation/workflows'); return data; }, enabled: tab === 'automation' });
-  const { data: reports } = useQuery({ queryKey: ['reports'], queryFn: async () => { const { data } = await api.get('/platform/reports'); return data; }, enabled: tab === 'reports' });
-  const { data: apiKeys } = useQuery({ queryKey: ['api-keys'], queryFn: async () => { const { data } = await api.get('/platform/api-keys'); return data; }, enabled: tab === 'api' });
-  const { data: webhooks } = useQuery({ queryKey: ['webhooks'], queryFn: async () => { const { data } = await api.get('/platform/webhooks'); return data; }, enabled: tab === 'api' });
+  const { data: tickets } = useQuery({ queryKey: ['my-tickets'], queryFn: async () => { const { data } = await helpdeskService.listMyTickets({ limit: 30 }); return data; }, enabled: tab === 'helpdesk' });
+  const { data: conversations } = useQuery({ queryKey: ['ai-conversations'], queryFn: async () => { const { data } = await aiService.listConversations(); return data; }, enabled: tab === 'ai' });
+  const { data: workflows } = useQuery({ queryKey: ['workflows'], queryFn: async () => { const { data } = await automationService.listWorkflows(); return data; }, enabled: tab === 'automation' });
+  const { data: reports } = useQuery({ queryKey: ['reports'], queryFn: async () => { const { data } = await reportsService.list(); return data; }, enabled: tab === 'reports' });
+  const { data: apiKeys } = useQuery({ queryKey: ['api-keys'], queryFn: async () => { const { data } = await integrationService.listApiKeys(); return data; }, enabled: tab === 'api' });
+  const { data: webhooks } = useQuery({ queryKey: ['webhooks'], queryFn: async () => { const { data } = await integrationService.listWebhooks(); return data; }, enabled: tab === 'api' });
 
   const askAiMut = useMutation({
-    mutationFn: async (query: string) => { const { data } = await api.post('/platform/ai/ask', { query }); return data; },
+    mutationFn: async (query: string) => { const { data } = await aiService.ask(query); return data; },
     onSuccess: (d) => { setAiResponse(d.data); queryClient.invalidateQueries({ queryKey: ['ai-conversations'] }); },
   });
 

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Badge, Spinner } from '@components/ui/Input';
 import { formatCurrency } from '@lib/utils';
-import api from '@lib/axios';
+import { analyticsService } from '@features/../services/analytics.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ const TABS = [
 function HeadcountTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['analytics-headcount'],
-    queryFn: async () => { const { data } = await api.get('/extended/analytics/headcount'); return data; },
+    queryFn: async () => { const { data } = await analyticsService.getHeadcount(); return data; },
   });
 
   const d = data?.data ?? {};
@@ -138,7 +138,7 @@ function HeadcountTab() {
 function AttritionTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['analytics-attrition'],
-    queryFn: async () => { const { data } = await api.get('/extended/analytics/attrition'); return data; },
+    queryFn: async () => { const { data } = await analyticsService.getAttrition(); return data; },
   });
 
   const d = data?.data ?? {};
@@ -196,7 +196,7 @@ function AttritionTab() {
 function PayrollSummaryTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['analytics-payroll'],
-    queryFn: async () => { const { data } = await api.get('/extended/analytics/payroll'); return data; },
+    queryFn: async () => { const { data } = await analyticsService.getPayrollAnalytics(); return data; },
   });
 
   const d = data?.data ?? {};
@@ -245,7 +245,7 @@ function AttendanceAnalyticsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['analytics-attendance', month],
-    queryFn: async () => { const { data } = await api.get(`/extended/analytics/attendance?month=${month}`); return data; },
+    queryFn: async () => { const { data } = await analyticsService.getAttendanceAnalytics({ month }); return data; },
   });
 
   const d = data?.data ?? {};
@@ -325,7 +325,7 @@ function ReportsTab() {
   const generate = async (r: typeof REPORT_TYPES[0]) => {
     setGenerating(r.id);
     try {
-      const { data } = await api.get(r.endpoint);
+      const { data } = await analyticsService.generateReport(r.type);
       setResult({ id: r.id, label: r.label, data: data.data ?? [] });
     } catch {
       setResult({ id: r.id, label: r.label, data: [] });

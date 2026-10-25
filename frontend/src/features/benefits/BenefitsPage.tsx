@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { Input, Spinner } from '@components/ui/Input';
-import api from '@lib/axios';
+import { benefitsService } from '@features/../services/benefits.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ function PlansTab() {
   const { data } = useQuery({
     queryKey: ['benefit-plans'],
     queryFn: async () => {
-      try { const { data } = await api.get('/extended/benefits/policies'); return data; }
+      try { const { data } = await benefitsService.listPolicies(); return data; }
       catch { return { data: FALLBACK_PLANS }; }
     },
   });
@@ -85,7 +85,7 @@ function PlansTab() {
   const plans: any[] = (data?.data ?? FALLBACK_PLANS).length > 0 ? (data?.data ?? FALLBACK_PLANS) : FALLBACK_PLANS;
 
   const enrollMut = useMutation({
-    mutationFn: (planId: string) => api.post('/extended/benefits/claims', { planId, action: 'enroll' }),
+    mutationFn: (planId: string) => benefitsService.enroll({ planId }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-enrollments'] }); setEnrollingId(null); },
   });
 
@@ -157,7 +157,7 @@ function MyBenefitsTab() {
   const { data } = useQuery({
     queryKey: ['my-enrollments'],
     queryFn: async () => {
-      try { const { data } = await api.get('/extended/benefits/policies?my=true'); return data; }
+      try { const { data } = await benefitsService.listPolicies({ my: true }); return data; }
       catch { return { data: FALLBACK_ENROLLMENTS }; }
     },
   });
@@ -222,7 +222,7 @@ function ClaimsTab() {
   const { data } = useQuery({
     queryKey: ['my-claims'],
     queryFn: async () => {
-      try { const { data } = await api.get('/extended/benefits/claims'); return data; }
+      try { const { data } = await benefitsService.listClaims(); return data; }
       catch { return { data: FALLBACK_CLAIMS }; }
     },
   });
@@ -233,7 +233,7 @@ function ClaimsTab() {
   });
 
   const mutation = useMutation({
-    mutationFn: (d: ClaimForm) => api.post('/extended/benefits/claims', d),
+    mutationFn: (d: ClaimForm) => benefitsService.submitClaim(d),
     onSuccess: () => {
       setSuccess(true); setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['my-claims'] });

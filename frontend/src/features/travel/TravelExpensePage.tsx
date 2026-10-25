@@ -11,7 +11,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { travelService } from '@features/../services/travel.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ function TravelRequestsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['travel-requests'],
     queryFn: async () => {
-      try { const { data } = await api.get('/travel/requests?limit=30'); return data; }
+      try { const { data } = await travelService.listRequests({ limit: 30 }); return data; }
       catch { return { data: FB_TRAVEL }; }
     },
   });
@@ -105,18 +105,18 @@ function TravelRequestsTab() {
   });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/travel/requests', d),
+    mutationFn: (d: any) => travelService.createRequest(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['travel-requests'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
 
   const approveMut = useMutation({
-    mutationFn: (id: string) => api.patch(`/travel/requests/${id}/approve`),
+    mutationFn: (id: string) => travelService.approveRequest(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['travel-requests'] }),
   });
 
   const rejectMut = useMutation({
-    mutationFn: (id: string) => api.patch(`/travel/requests/${id}/reject`),
+    mutationFn: (id: string) => travelService.rejectRequest(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['travel-requests'] }),
   });
 
@@ -293,7 +293,7 @@ function ExpenseClaimsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['travel-expenses'],
     queryFn: async () => {
-      try { const { data } = await api.get('/travel/expenses?limit=50'); return data; }
+      try { const { data } = await travelService.listExpenses({ limit: 50 }); return data; }
       catch { return { data: FB_EXPENSES }; }
     },
   });
@@ -305,13 +305,13 @@ function ExpenseClaimsTab() {
   });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/travel/expenses', d),
+    mutationFn: (d: any) => travelService.submitExpense(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['travel-expenses'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
 
   const approveMut = useMutation({
-    mutationFn: (id: string) => api.patch(`/travel/expenses/${id}/approve`),
+    mutationFn: (id: string) => travelService.approveExpense(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['travel-expenses'] }),
   });
 
@@ -441,7 +441,7 @@ function AdvancesTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['travel-advances'],
     queryFn: async () => {
-      try { const { data } = await api.get('/travel/advances?limit=20'); return data; }
+      try { const { data } = await travelService.listAdvances({ limit: 20 }); return data; }
       catch { return { data: FB_ADVANCES }; }
     },
   });
@@ -450,7 +450,7 @@ function AdvancesTab() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof advanceSchema>>({ resolver: zodResolver(advanceSchema) });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/travel/advances', d),
+    mutationFn: (d: any) => travelService.requestAdvance(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['travel-advances'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
@@ -572,7 +572,7 @@ function MyTripsTab() {
   const { data } = useQuery({
     queryKey: ['travel-requests'],
     queryFn: async () => {
-      try { const { data } = await api.get('/travel/requests?limit=30'); return data; }
+      try { const { data } = await travelService.listRequests({ limit: 30 }); return data; }
       catch { return { data: FB_TRAVEL }; }
     },
   });
@@ -580,7 +580,7 @@ function MyTripsTab() {
   const { data: expData } = useQuery({
     queryKey: ['travel-expenses'],
     queryFn: async () => {
-      try { const { data } = await api.get('/travel/expenses?limit=50'); return data; }
+      try { const { data } = await travelService.listExpenses({ limit: 50 }); return data; }
       catch { return { data: FB_EXPENSES }; }
     },
   });

@@ -5,7 +5,7 @@ import { ArrowLeft, Save, Send, Variable, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { Input, Select, Spinner } from '@components/ui/Input';
 import { Badge } from '@components/ui/Input';
-import api from '@lib/axios';
+import { templatesService } from '@features/../services/templates.service';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ interface TemplateData {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function getTemplate(id: string): Promise<TemplateData> {
-  const { data } = await api.get<{ data: TemplateData }>(`/extended/templates/${id}`);
+  const { data } = await templatesService.getById(id);
   return data.data;
 }
 
@@ -109,10 +109,10 @@ async function saveTemplate(payload: {
     status: payload.status,
   };
   if (payload.id) {
-    const { data } = await api.put<{ data: TemplateData }>(`/extended/templates/${payload.id}`, body);
+    const { data } = await templatesService.update(payload.id, body);
     return data.data;
   }
-  const { data } = await api.post<{ data: TemplateData }>('/extended/templates', body);
+  const { data } = await templatesService.create(body);
   return data.data;
 }
 

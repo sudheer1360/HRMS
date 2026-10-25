@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { biometricService } from '@features/../services/biometric.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -78,7 +78,7 @@ function DevicesTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['bio-devices'],
-    queryFn: async () => { const { data } = await api.get('/extended/biometric/devices'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await biometricService.listDevices(); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<z.infer<typeof deviceSchema>>({
@@ -88,18 +88,18 @@ function DevicesTab() {
 
   const saveMutation = useMutation({
     mutationFn: (d: any) => editItem
-      ? api.put(`/extended/biometric/devices/${editItem.id}`, d)
-      : api.post('/extended/biometric/devices', d),
+      ? biometricService.updateDevice(editItem.id, d)
+      : biometricService.createDevice(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['bio-devices'] }); reset(); setShowForm(false); setEditItem(null); },
   });
 
   const syncMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/extended/biometric/devices/${id}/sync`),
+    mutationFn: (id: string) => biometricService.syncDevice(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bio-sync'] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/extended/biometric/devices/${id}`),
+    mutationFn: (id: string) => biometricService.deleteDevice(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bio-devices'] }),
   });
 
@@ -216,7 +216,7 @@ function LogsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['bio-logs', from, to],
-    queryFn: async () => { const { data } = await api.get(`/extended/biometric/logs?from=${from}&to=${to}&limit=100`); return data.data ?? []; },
+    queryFn: async () => { const { data } = await biometricService.listLogs({ from, to, limit: 100 }); return data.data ?? []; },
   });
 
   const logs: any[] = data ?? [];
@@ -291,13 +291,13 @@ function ExceptionsTab() {
     queryKey: ['bio-exceptions', filter],
     queryFn: async () => {
       const resolved = filter === 'resolved' ? 'true' : 'false';
-      const { data } = await api.get(`/extended/biometric/exceptions?resolved=${resolved}&limit=50`);
+      const { data } = await biometricService.listExceptions({ resolved, limit: 50 });
       return data.data ?? [];
     },
   });
 
   const resolveMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/extended/biometric/exceptions/${id}/resolve`, { resolution: 'Manually resolved by HR' }),
+    mutationFn: (id: string) => biometricService.resolveException(id, 'Manually resolved by HR'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bio-exceptions'] }),
   });
 
@@ -373,12 +373,12 @@ function SyncStatusTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['bio-sync'],
-    queryFn: async () => { const { data } = await api.get('/extended/biometric/sync-status'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await biometricService.listDevices(); return data.data ?? []; },
     refetchInterval: 30000, // auto-refresh every 30s
   });
 
   const syncMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/extended/biometric/devices/${id}/sync`),
+    mutationFn: (id: string) => biometricService.syncDevice(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bio-sync'] }),
   });
 

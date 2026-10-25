@@ -9,7 +9,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Spinner } from '@components/ui/Input';
 import { Badge } from '@components/ui/Input';
-import api from '@lib/axios';
+import { formbuilderService } from '@features/../services/formbuilder.service';
 
 // ── Field Types ───────────────────────────────────────────────────────────────
 
@@ -75,19 +75,19 @@ function makeField(type: string): FieldDef {
 }
 
 async function getForm(id: string) {
-  const { data } = await api.get<{ data: FormData }>(`/extended/forms/${id}`);
+  const { data } = await formbuilderService.getById(id);
   return data.data;
 }
 
 async function saveForm(payload: { id?: string; name: string; category: string; description: string; fields: FieldDef[]; status?: string }) {
   if (payload.id) {
-    const { data } = await api.put<{ data: FormData }>(`/extended/forms/${payload.id}`, {
+    const { data } = await formbuilderService.update(payload.id, {
       name: payload.name, category: payload.category, description: payload.description,
       fields: payload.fields, status: payload.status,
     });
     return data.data;
   }
-  const { data } = await api.post<{ data: FormData }>('/extended/forms', {
+  const { data } = await formbuilderService.create({
     name: payload.name, category: payload.category, description: payload.description,
     fields: payload.fields,
   });

@@ -12,7 +12,10 @@ import { Link } from 'react-router-dom';
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { authService } from '@features/../services/auth.service';
+import { leaveService } from '@features/../services/leave.service';
+import { payrollService } from '@features/../services/payroll.service';
+import { employeeService } from '@features/../services/employee.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -47,17 +50,17 @@ const QUICK_LINKS = [
 function DashboardTab({ onTab }: { onTab: (t: string) => void }) {
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
 
   const { data: myLeaves } = useQuery({
     queryKey: ['my-leaves-ess'],
-    queryFn: async () => { const { data } = await api.get('/leaves/my/all?status=Pending&limit=5'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await leaveService.listMy({ status: 'Pending', limit: 5 }); return data.data ?? []; },
   });
 
   const { data: payslips } = useQuery({
     queryKey: ['my-payslips-ess'],
-    queryFn: async () => { const { data } = await api.get('/payroll/my-payslips?limit=1'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await payrollService.listMyPayslips({ limit: 1 }); return data.data ?? []; },
   });
 
   const firstName = profile?.fullName?.split(' ')[0] ?? profile?.email?.split('@')[0] ?? 'Employee';
@@ -169,7 +172,7 @@ function ProfileTab() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema) });
@@ -187,7 +190,7 @@ function ProfileTab() {
   }, [profile, editing]);
 
   const saveMutation = useMutation({
-    mutationFn: (d: any) => api.put(`/employees/${profile?.employeeId ?? profile?.id}`, d),
+    mutationFn: (d: any) => employeeService.update(profile?.employeeId ?? profile?.id, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-profile'] }); setEditing(false); },
   });
 
@@ -269,7 +272,7 @@ function Field({ label, value, className = '' }: { label: string; value?: any; c
 function PayslipsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-payslips'],
-    queryFn: async () => { const { data } = await api.get('/payroll/my-payslips?limit=24'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await payrollService.listMyPayslips({ limit: 24 }); return data.data ?? []; },
   });
 
   const payslips: any[] = data ?? [];
@@ -322,7 +325,7 @@ function DocumentsTab() {
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
 
   const empId = profile?.employeeId ?? profile?.id;
@@ -330,13 +333,13 @@ function DocumentsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-docs', empId],
     enabled: !!empId,
-    queryFn: async () => { const { data } = await api.get(`/employees/${empId}/documents`); return data.data ?? []; },
+    queryFn: async () => { const { data } = await employeeService.list({ id: empId, type: 'documents' }); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset } = useForm();
 
   const uploadMutation = useMutation({
-    mutationFn: (d: any) => api.post(`/employees/${empId}/documents`, d),
+    mutationFn: (d: any) => employeeService.update(empId, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-docs'] }); reset(); setShowForm(false); },
   });
 
@@ -402,7 +405,7 @@ function DocumentsTab() {
 function TeamTab() {
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
 
   const dept = profile?.department;
@@ -411,7 +414,7 @@ function TeamTab() {
     queryKey: ['team-dir', dept],
     queryFn: async () => {
       const params = dept ? `?department=${encodeURIComponent(dept)}&limit=50` : '?limit=50';
-      const { data } = await api.get(`/employees${params}`);
+      const { data } = await employeeService.list(Object.fromEntries(new URLSearchParams(params.replace('?',''))));
       return data.data ?? [];
     },
   });
@@ -452,7 +455,7 @@ function TeamTab() {
 function NotificationsTab() {
   const { data: myLeaves } = useQuery({
     queryKey: ['my-leaves-notifs'],
-    queryFn: async () => { const { data } = await api.get('/leaves/my/all?limit=10'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await leaveService.listMy({ limit: 10 }); return data.data ?? []; },
   });
 
   const leaves: any[] = myLeaves ?? [];

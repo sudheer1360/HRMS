@@ -5,7 +5,7 @@ import {
   ChevronRight, Sparkles,
 } from 'lucide-react';
 import { Spinner } from '@components/ui/Input';
-import api from '@lib/axios';
+import { aiService } from '@features/../services/platform.service';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -78,14 +78,14 @@ export default function AIAssistantPage() {
   const { data: historyData } = useQuery({
     queryKey: ['ai-conversations'],
     queryFn: async () => {
-      try { const { data } = await api.get('/platform/ai/conversations'); return data; }
+      try { const { data } = await aiService.listConversations(); return data; }
       catch { return { data: FALLBACK_CONVERSATIONS }; }
     },
   });
   const history: any[] = historyData?.data ?? [];
 
   const askMut = useMutation({
-    mutationFn: (query: string) => api.post('/platform/ai/ask', { query }).then(r => r.data),
+    mutationFn: (query: string) => aiService.ask(query),
     onSuccess: (data) => {
       const resp = data.data?.response ?? 'I\'m looking into that for you. Please refer to your HR policy document or contact the HR team for accurate guidance.';
       setMessages(prev => [...prev, {

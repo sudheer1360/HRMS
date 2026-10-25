@@ -19,9 +19,14 @@
       "@/*": ["src/*"],
       "@config/*": ["src/config/*"],
       "@middleware/*": ["src/middleware/*"],
+      "@middlewares/*": ["src/middlewares/*"],
       "@modules/*": ["src/modules/*"],
       "@common/*": ["src/common/*"],
-      "@infrastructure/*": ["src/infrastructure/*"]
+      "@infrastructure/*": ["src/infrastructure/*"],
+      "@utilities": ["src/utilities/index.ts"],
+      "@utilities/*": ["src/utilities/*"],
+      "@clients": ["src/clients/index.ts"],
+      "@clients/*": ["src/clients/*"]
     }
   },
   "include": ["src/**/*.ts"],

@@ -10,7 +10,8 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { performanceService } from '@features/../services/performance.service';
+import { employeeService } from '@features/../services/employee.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -85,7 +86,7 @@ function MyGoalsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-goals'],
-    queryFn: async () => { const { data } = await api.get('/performance/goals/my?limit=50'); return data; },
+    queryFn: async () => { const { data } = await performanceService.listMyGoals({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -94,17 +95,17 @@ function MyGoalsTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/performance/goals', d),
+    mutationFn: (d: any) => performanceService.createGoal(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-goals'] }); reset(); setShowForm(false); },
   });
 
   const updateProgressMutation = useMutation({
-    mutationFn: ({ id, progress }: { id: string; progress: number }) => api.patch(`/performance/goals/${id}/progress`, { progress }),
+    mutationFn: ({ id, progress }: { id: string; progress: number }) => performanceService.updateGoalProgress(id, progress),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-goals'] }); setProgressId(null); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/performance/goals/${id}`),
+    mutationFn: (id: string) => performanceService.deleteGoal(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-goals'] }),
   });
 
@@ -233,24 +234,24 @@ function AppraisalsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['appraisals'],
-    queryFn: async () => { const { data } = await api.get('/performance/appraisals/my?limit=20'); return data; },
+    queryFn: async () => { const { data } = await performanceService.listMyAppraisals({ limit: 20 }); return data; },
   });
 
   const { data: teamAppraisals } = useQuery({
     queryKey: ['team-appraisals'],
-    queryFn: async () => { const { data } = await api.get('/performance/appraisals/team?limit=30'); return data; },
+    queryFn: async () => { const { data } = await performanceService.listTeamAppraisals({ limit: 30 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof selfAssessSchema>>({ resolver: zodResolver(selfAssessSchema) });
 
   const selfAssessMutation = useMutation({
-    mutationFn: ({ id, d }: { id: string; d: any }) => api.post(`/performance/appraisals/${id}/self-assessment`, d),
+    mutationFn: ({ id, d }: { id: string; d: any }) => performanceService.submitSelfAssessment(id, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['appraisals'] }); reset(); setSelectedAppraisal(null); },
   });
 
   const managerRateMutation = useMutation({
     mutationFn: ({ id, rating, comments }: { id: string; rating: number; comments: string }) =>
-      api.patch(`/performance/appraisals/${id}/manager-rating`, { rating, comments }),
+      performanceService.submitManagerRating(id, rating, comments),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['team-appraisals'] }),
   });
 
@@ -411,12 +412,12 @@ function FeedbackTab() {
 
   const { data: employees } = useQuery({
     queryKey: ['employees-short'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data; },
+    queryFn: async () => { const { data } = await employeeService.list({ limit: 100 }); return data; },
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-feedback'],
-    queryFn: async () => { const { data } = await api.get('/performance/feedback/my?limit=30'); return data; },
+    queryFn: async () => { const { data } = await performanceService.listMyFeedback({ limit: 30 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -425,7 +426,7 @@ function FeedbackTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/performance/feedback', d),
+    mutationFn: (d: any) => performanceService.submitFeedback(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-feedback'] }); reset(); setShowForm(false); },
   });
 
@@ -520,7 +521,7 @@ function FeedbackTab() {
 function ReviewsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['perf-reviews'],
-    queryFn: async () => { const { data } = await api.get('/performance/reviews?limit=30'); return data; },
+    queryFn: async () => { const { data } = await performanceService.listReviews({ limit: 30 }); return data; },
   });
 
   const reviews: any[] = data?.data ?? [];
@@ -581,11 +582,11 @@ function ProbationTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['probation'],
-    queryFn: async () => { const { data } = await api.get('/performance/probation?limit=50'); return data; },
+    queryFn: async () => { const { data } = await performanceService.listProbation({ limit: 50 }); return data; },
   });
 
   const confirmMutation = useMutation({
-    mutationFn: ({ id, decision }: { id: string; decision: string }) => api.patch(`/performance/probation/${id}/decision`, { decision }),
+    mutationFn: ({ id, decision }: { id: string; decision: string }) => performanceService.submitProbationDecision(id, decision),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['probation'] }),
   });
 

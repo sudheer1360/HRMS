@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { onboardingService } from '@features/../services/onboarding.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -57,11 +57,11 @@ function ActiveOnboardingTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['onboarding-active'],
-    queryFn: async () => { const { data } = await api.get('/extended/onboarding?status=InProgress&limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await onboardingService.list({ status: 'InProgress', limit: 50 }); return data.data ?? []; },
   });
 
   const completeMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/extended/onboarding/${id}/complete`),
+    mutationFn: (id: string) => onboardingService.update(id, { status: 'Completed' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['onboarding-active'] }),
   });
 
@@ -159,13 +159,13 @@ function ChecklistTemplatesTab() {
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['ob-templates'],
-    queryFn: async () => { const { data } = await api.get('/extended/onboarding/templates?limit=30'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await onboardingService.listTemplates({ limit: 30 }); return data.data ?? []; },
   });
 
   const { data: templateTasks } = useQuery({
     queryKey: ['ob-template-tasks', selected?.id],
     enabled: !!selected,
-    queryFn: async () => { const { data } = await api.get(`/extended/onboarding/templates/${selected.id}/tasks`); return data.data ?? []; },
+    queryFn: async () => { const { data } = await onboardingService.listTasks(selected.id); return data.data ?? []; },
   });
 
   const { register: regT, handleSubmit: hsT, reset: resetT, formState: { errors: errT } } = useForm({
@@ -179,17 +179,17 @@ function ChecklistTemplatesTab() {
   });
 
   const saveTplMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/onboarding/templates', d),
+    mutationFn: (d: any) => onboardingService.createTemplate(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['ob-templates'] }); resetT(); setShowTemplateForm(false); },
   });
 
   const saveTaskMutation = useMutation({
-    mutationFn: (d: any) => api.post(`/extended/onboarding/templates/${selected.id}/tasks`, { ...d, mandatory: d.mandatory === 'true' }),
+    mutationFn: (d: any) => onboardingService.updateTask(selected.id, 'new', { ...d, mandatory: d.mandatory === 'true' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['ob-template-tasks'] }); resetTask(); setShowTaskForm(false); },
   });
 
   const deleteTaskMutation = useMutation({
-    mutationFn: (taskId: string) => api.delete(`/extended/onboarding/tasks/${taskId}`),
+    mutationFn: (taskId: string) => onboardingService.deleteTemplate(taskId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ob-template-tasks'] }),
   });
 
@@ -305,11 +305,11 @@ function MyTasksTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-ob-tasks'],
-    queryFn: async () => { const { data } = await api.get('/extended/onboarding/my-tasks?limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await onboardingService.listMyTasks(); return data.data ?? []; },
   });
 
   const completeMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/extended/onboarding/tasks/${id}/complete`),
+    mutationFn: (id: string) => onboardingService.completeMyTask(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-ob-tasks'] }),
   });
 
@@ -369,7 +369,7 @@ const BGV_CHECKS = ['Identity', 'Address', 'Employment', 'Education', 'Criminal'
 function BGVTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['bgv-status'],
-    queryFn: async () => { const { data } = await api.get('/extended/onboarding/bgv?limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await onboardingService.listBGV({ limit: 50 }); return data.data ?? []; },
   });
 
   const bgvList: any[] = data ?? [];

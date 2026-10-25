@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate, formatCurrency } from '@lib/utils';
-import api from '@lib/axios';
+import { compensationService } from '@features/../services/compensation.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ function SalaryReviewsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['compensation-reviews'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compensation/review-cycles?limit=20'); return data; }
+      try { const { data } = await compensationService.listReviewCycles({ limit: 20 }); return data; }
       catch { return { data: FB_REVIEWS }; }
     },
   });
@@ -94,13 +94,13 @@ function SalaryReviewsTab() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof reviewSchema>>({ resolver: zodResolver(reviewSchema) });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/compensation/review-cycles', d),
+    mutationFn: (d: any) => compensationService.createReviewCycle(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['compensation-reviews'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
 
   const activeMut = useMutation({
-    mutationFn: (id: string) => api.post(`/compensation/review-cycles/${id}/activate`),
+    mutationFn: (id: string) => compensationService.activateReviewCycle(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['compensation-reviews'] }),
   });
 
@@ -257,7 +257,7 @@ function BonusTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-bonuses'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compensation/bonuses/my?limit=30'); return data; }
+      try { const { data } = await compensationService.listMyBonuses({ limit: 30 }); return data; }
       catch { return { data: FB_BONUSES }; }
     },
   });
@@ -266,7 +266,7 @@ function BonusTab() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof bonusSchema>>({ resolver: zodResolver(bonusSchema) });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/compensation/bonuses', d),
+    mutationFn: (d: any) => compensationService.createBonus(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-bonuses'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
@@ -378,7 +378,7 @@ function LoansTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-loans'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compensation/loans/my?limit=20'); return data; }
+      try { const { data } = await compensationService.listMyLoans({ limit: 20 }); return data; }
       catch { return { data: FB_LOANS }; }
     },
   });
@@ -394,7 +394,7 @@ function LoansTab() {
   const estimatedEMI = principalAmt > 0 ? Math.ceil(principalAmt / tenureVal) : 0;
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/compensation/loans', d),
+    mutationFn: (d: any) => compensationService.createLoan(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-loans'] }); reset(); setShowForm(false); },
     onError: () => { reset(); setShowForm(false); },
   });
@@ -542,7 +542,7 @@ function VariablePayTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['variable-pay'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compensation/variable-pay/my?limit=20'); return data; }
+      try { const { data } = await compensationService.listMyVariablePay({ limit: 20 }); return data; }
       catch { return { data: FB_VARIABLE }; }
     },
   });
@@ -633,7 +633,7 @@ function CTCRevisionsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['ctc-revisions'],
     queryFn: async () => {
-      try { const { data } = await api.get('/compensation/ctc-revisions/my?limit=10'); return data; }
+      try { const { data } = await compensationService.listMyCTCRevisions({ limit: 10 }); return data; }
       catch { return { data: FB_CTC }; }
     },
   });

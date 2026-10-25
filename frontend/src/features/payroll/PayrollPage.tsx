@@ -10,7 +10,8 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate, formatCurrency } from '@lib/utils';
-import api from '@lib/axios';
+import { payrollService } from '@features/../services/payroll.service';
+import { statutoryService } from '@features/../services/statutory.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -62,23 +63,23 @@ function PayrollRunsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['payroll-runs'],
-    queryFn: async () => { const { data } = await api.get('/payroll/runs?limit=30'); return data; },
+    queryFn: async () => { const { data } = await payrollService.listRuns({ limit: 30 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof runSchema>>({ resolver: zodResolver(runSchema) });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/payroll/runs', d),
+    mutationFn: (d: any) => payrollService.createRun(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll-runs'] }); reset(); setShowForm(false); },
   });
 
   const processMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/payroll/runs/${id}/process`),
+    mutationFn: (id: string) => payrollService.processRun(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll-runs'] }),
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/payroll/runs/${id}/approve`),
+    mutationFn: (id: string) => payrollService.approveRun(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll-runs'] }),
   });
 
@@ -215,7 +216,7 @@ function SalaryStructuresTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['salary-structures'],
-    queryFn: async () => { const { data } = await api.get('/payroll/salary-structures?limit=30'); return data; },
+    queryFn: async () => { const { data } = await payrollService.listAllStructures({ limit: 30 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -224,12 +225,12 @@ function SalaryStructuresTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/payroll/salary-structures', { ...d, pfApplicable: d.pfApplicable === 'true', esiApplicable: d.esiApplicable === 'true' }),
+    mutationFn: (d: any) => payrollService.createStructure({ ...d, pfApplicable: d.pfApplicable === 'true', esiApplicable: d.esiApplicable === 'true' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salary-structures'] }); reset(); setShowForm(false); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/payroll/salary-structures/${id}`),
+    mutationFn: (id: string) => payrollService.deleteStructure(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salary-structures'] }); if (selectedStruct?.id === 'TBD') setSelectedStruct(null); },
   });
 
@@ -350,7 +351,7 @@ function MyPayslipsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-payslips'],
-    queryFn: async () => { const { data } = await api.get('/payroll/my-payslips'); return data; },
+    queryFn: async () => { const { data } = await payrollService.listMyPayslips(); return data; },
   });
 
   const payslips: any[] = data?.data ?? [];
@@ -483,12 +484,12 @@ function ExpensesTab() {
 
   const { data: myExpenses, isLoading } = useQuery({
     queryKey: ['my-expenses'],
-    queryFn: async () => { const { data } = await api.get('/payroll/expenses/my?limit=50'); return data; },
+    queryFn: async () => { const { data } = await payrollService.listMyExpenses({ limit: 50 }); return data; },
   });
 
   const { data: pendingExpenses } = useQuery({
     queryKey: ['pending-expenses'],
-    queryFn: async () => { const { data } = await api.get('/payroll/expenses?status=Pending&limit=50'); return data; },
+    queryFn: async () => { const { data } = await payrollService.listExpenses({ status: 'Pending', limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -497,13 +498,13 @@ function ExpensesTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/payroll/expenses', d),
+    mutationFn: (d: any) => payrollService.submitExpense(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-expenses'] }); reset(); setShowForm(false); },
   });
 
   const approveMutation = useMutation({
     mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
-      api.patch(`/payroll/expenses/${id}/${action}`),
+      payrollService.actionExpense(id, action),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['pending-expenses'] }); queryClient.invalidateQueries({ queryKey: ['my-expenses'] }); },
   });
 
@@ -631,17 +632,17 @@ function ExpensesTab() {
 function StatutoryTab() {
   const { data: pf } = useQuery({
     queryKey: ['statutory-pf-summary'],
-    queryFn: async () => { const { data } = await api.get('/extended/statutory/pf/summary'); return data; },
+    queryFn: async () => { const { data } = await statutoryService.getPFSummary(); return data; },
   });
 
   const { data: esi } = useQuery({
     queryKey: ['statutory-esi-summary'],
-    queryFn: async () => { const { data } = await api.get('/extended/statutory/esi/summary'); return data; },
+    queryFn: async () => { const { data } = await statutoryService.getESISummary(); return data; },
   });
 
   const { data: tds } = useQuery({
     queryKey: ['statutory-tds-summary'],
-    queryFn: async () => { const { data } = await api.get('/extended/statutory/tds/summary'); return data; },
+    queryFn: async () => { const { data } = await statutoryService.getTDSSummary(); return data; },
   });
 
   const statCards = [

@@ -4,6 +4,7 @@ dist
 # Optional: Ignore documentation files
 /docs
 /feature-files
+/dist-test
 
 # Optional: Ignore log files
 logs

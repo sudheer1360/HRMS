@@ -6,7 +6,7 @@ import {
   TrendingUp, TrendingDown, Minus,
 } from 'lucide-react';
 import { Badge, Spinner } from '@components/ui/Input';
-import api from '@lib/axios';
+import { governanceService } from '@features/../services/governance.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ function PerformanceTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['nfr-performance'],
     queryFn: async () => {
-      const { data } = await api.get<{ data: any[] }>('/extended/governance/nfr/performance');
+      const { data } = await governanceService.getNFRPerformance();
       return data.data ?? [];
     },
   });
@@ -156,7 +156,7 @@ function ScalabilityTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['nfr-scalability'],
     queryFn: async () => {
-      const { data } = await api.get<{ data: any }>('/extended/governance/nfr/scalability');
+      const { data } = await governanceService.getNFRScalability();
       return data.data;
     },
   });
@@ -236,7 +236,7 @@ function DRTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['nfr-dr'],
     queryFn: async () => {
-      const { data } = await api.get<{ data: any }>('/extended/governance/nfr/dr-status');
+      const { data } = await governanceService.getNFRDRStatus();
       return data.data;
     },
   });
@@ -326,7 +326,7 @@ function ComplianceTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['nfr-compliance'],
     queryFn: async () => {
-      const { data } = await api.get<{ data: any[] }>('/extended/governance/nfr/compliance');
+      const { data } = await governanceService.getNFRCompliance();
       return data.data ?? [];
     },
   });
@@ -396,7 +396,7 @@ function AlertsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['nfr-alerts'],
     queryFn: async () => {
-      const { data } = await api.get<{ data: any[] }>('/extended/governance/nfr/alerts');
+      const { data } = await governanceService.getNFRAlerts();
       return data.data ?? [];
     },
   });

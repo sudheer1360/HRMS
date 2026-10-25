@@ -10,7 +10,8 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { assetsService } from '@features/../services/assets.service';
+import { employeeService } from '@features/../services/employee.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -76,7 +77,7 @@ function AssetsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['assets'],
-    queryFn: async () => { const { data } = await api.get('/extended/assets?limit=100'); return data; },
+    queryFn: async () => { const { data } = await assetsService.list({ limit: 100 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof assetSchema>>({
@@ -85,12 +86,12 @@ function AssetsTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/assets', d),
+    mutationFn: (d: any) => assetsService.create(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['assets'] }); reset(); setShowForm(false); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/extended/assets/${id}`),
+    mutationFn: (id: string) => assetsService.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assets'] }),
   });
 
@@ -221,28 +222,28 @@ function AllocationsTab() {
 
   const { data: assets } = useQuery({
     queryKey: ['assets'],
-    queryFn: async () => { const { data } = await api.get('/extended/assets?status=Available&limit=100'); return data; },
+    queryFn: async () => { const { data } = await assetsService.list({ status: 'Available', limit: 100 }); return data; },
   });
 
   const { data: employees } = useQuery({
     queryKey: ['employees-short'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data; },
+    queryFn: async () => { const { data } = await employeeService.list({ limit: 100 }); return data; },
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['asset-allocations'],
-    queryFn: async () => { const { data } = await api.get('/extended/assets/allocations?limit=100'); return data; },
+    queryFn: async () => { const { data } = await assetsService.listAllocations({ limit: 100 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof allocationSchema>>({ resolver: zodResolver(allocationSchema) });
 
   const allocateMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/assets/allocations', d),
+    mutationFn: (d: any) => assetsService.allocate(d.assetId, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['asset-allocations'] }); queryClient.invalidateQueries({ queryKey: ['assets'] }); reset(); setShowForm(false); },
   });
 
   const returnMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/extended/assets/allocations/${id}/return`),
+    mutationFn: (id: string) => assetsService.returnAsset(id, {}),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['asset-allocations'] }); queryClient.invalidateQueries({ queryKey: ['assets'] }); },
   });
 
@@ -339,12 +340,12 @@ function MaintenanceTab() {
 
   const { data: assets } = useQuery({
     queryKey: ['assets-all'],
-    queryFn: async () => { const { data } = await api.get('/extended/assets?limit=100'); return data; },
+    queryFn: async () => { const { data } = await assetsService.list({ limit: 100 }); return data; },
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['asset-maintenance'],
-    queryFn: async () => { const { data } = await api.get('/extended/assets/maintenance?limit=50'); return data; },
+    queryFn: async () => { const { data } = await assetsService.listMaintenance({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof maintenanceSchema>>({
@@ -353,12 +354,12 @@ function MaintenanceTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/extended/assets/maintenance', d),
+    mutationFn: (d: any) => assetsService.scheduleMaintenance(d.assetId, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['asset-maintenance'] }); reset(); setShowForm(false); },
   });
 
   const completeMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/extended/assets/maintenance/${id}/complete`),
+    mutationFn: (id: string) => assetsService.update(id, { status: 'Completed' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['asset-maintenance'] }),
   });
 
@@ -433,7 +434,7 @@ function MaintenanceTab() {
 function MyAssetsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-assets'],
-    queryFn: async () => { const { data } = await api.get('/extended/assets/my?limit=50'); return data; },
+    queryFn: async () => { const { data } = await assetsService.list({ my: true, limit: 50 }); return data; },
   });
 
   const list: any[] = data?.data ?? [];

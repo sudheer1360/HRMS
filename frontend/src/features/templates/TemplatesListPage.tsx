@@ -5,7 +5,7 @@ import { Plus, Search, FileText, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { templatesService } from '@features/../services/templates.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -57,13 +57,13 @@ function statusVariant(s: string): 'success' | 'warning' | 'info' | 'default' {
 async function listTemplates(params: { type?: string; search?: string }) {
   const p = new URLSearchParams();
   if (params.type && params.type !== 'All') p.set('type', params.type);
-  const { data } = await api.get<{ data: Template[]; meta: any }>(`/extended/templates?${p}`);
+  const { data } = await templatesService.list(Object.fromEntries(new URLSearchParams(p)));
   return data;
 }
 
 async function deleteTemplate(id: string) {
   // No delete endpoint; update status to Archived
-  await api.put(`/extended/templates/${id}`, { status: 'Archived' });
+  await templatesService.archive(id);
 }
 
 function safeDate(v?: string) {

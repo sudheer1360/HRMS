@@ -8,7 +8,7 @@ import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 import { useToast } from '@components/ui/Toast';
 import { formatDate, cn } from '@lib/utils';
-import api from '@lib/axios';
+import { employeeService } from '@features/../services/employee.service';
 import type { Employee, PaginatedResponse } from '@types';
 
 export default function EmployeeListPage() {
@@ -21,7 +21,7 @@ export default function EmployeeListPage() {
   const { toast, toastError } = useToast();
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/employees/${id}`),
+    mutationFn: (id: string) => employeeService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast('Employee deleted successfully');
@@ -45,8 +45,7 @@ export default function EmployeeListPage() {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (search) params.set('search', search);
       if (status) params.set('status', status);
-      const { data } = await api.get<PaginatedResponse<Employee>>(`/employees?${params}`);
-      return data;
+      return employeeService.list(Object.fromEntries(new URLSearchParams(params))) as Promise<PaginatedResponse<Employee>>;
     },
   });
 

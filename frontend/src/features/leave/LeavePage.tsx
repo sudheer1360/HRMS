@@ -10,7 +10,8 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate, cn } from '@lib/utils';
-import api from '@lib/axios';
+import { leaveService } from '@features/../services/leave.service';
+import { authService } from '@features/../services/auth.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -56,7 +57,7 @@ function MyLeavesTab() {
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
   const companyId = profile?.companyId ?? profile?.company_id;
 
@@ -64,7 +65,7 @@ function MyLeavesTab() {
     queryKey: ['leave-types', companyId],
     enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await api.get(`/leaves/types/${companyId}`);
+      const { data } = await leaveService.listTypes(companyId);
       return data.data ?? [];
     },
   });
@@ -72,7 +73,7 @@ function MyLeavesTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-leaves'],
     queryFn: async () => {
-      const { data } = await api.get('/leaves/my-leaves?limit=50');
+      const { data } = await leaveService.listMy({ limit: 50 });
       return data;
     },
   });
@@ -82,7 +83,7 @@ function MyLeavesTab() {
   });
 
   const applyMutation = useMutation({
-    mutationFn: (d: any) => api.post('/leaves/apply', d),
+    mutationFn: (d: any) => leaveService.apply(d),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-leaves'] });
       queryClient.invalidateQueries({ queryKey: ['leave-balance'] });
@@ -91,7 +92,7 @@ function MyLeavesTab() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/leaves/${id}/cancel`),
+    mutationFn: (id: string) => leaveService.cancel(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-leaves'] }),
   });
 
@@ -192,7 +193,7 @@ function MyLeavesTab() {
 function BalanceTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['leave-balance'],
-    queryFn: async () => { const { data } = await api.get('/leaves/my-balance'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await leaveService.getMyBalance(); return data.data ?? []; },
   });
 
   const balances: any[] = data ?? [];
@@ -242,12 +243,12 @@ function TeamLeavesTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['team-leaves'],
-    queryFn: async () => { const { data } = await api.get('/leaves?status=Pending&limit=50'); return data; },
+    queryFn: async () => { const { data } = await leaveService.list({ status: 'Pending', limit: 50 }); return data; },
   });
 
   const approveMutation = useMutation({
     mutationFn: ({ id, status, remarks }: { id: string; status: string; remarks?: string }) =>
-      api.patch(`/leaves/${id}/approve`, { status, remarks }),
+      leaveService.approve(id, status, remarks),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['team-leaves'] }),
   });
 
@@ -326,7 +327,7 @@ function HolidaysTab() {
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
   const companyId = profile?.companyId ?? profile?.company_id;
 
@@ -334,7 +335,7 @@ function HolidaysTab() {
     queryKey: ['holidays', companyId, year],
     enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await api.get(`/leaves/holidays/${companyId}?year=${year}`);
+      const { data } = await leaveService.listHolidays(companyId, year);
       return data.data ?? [];
     },
   });
@@ -344,12 +345,12 @@ function HolidaysTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/leaves/holidays', { ...d, companyId }),
+    mutationFn: (d: any) => leaveService.createHoliday({ ...d, companyId }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['holidays'] }); reset(); setShowForm(false); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/leaves/holidays/${id}`),
+    mutationFn: (id: string) => leaveService.deleteHoliday(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['holidays'] }),
   });
 
@@ -463,14 +464,14 @@ function LeaveTypesTab() {
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
   const companyId = profile?.companyId ?? profile?.company_id;
 
   const { data, isLoading } = useQuery({
     queryKey: ['leave-types', companyId],
     enabled: !!companyId,
-    queryFn: async () => { const { data } = await api.get(`/leaves/types/${companyId}`); return data.data ?? []; },
+    queryFn: async () => { const { data } = await leaveService.listTypes(companyId); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
@@ -480,13 +481,13 @@ function LeaveTypesTab() {
 
   const saveMutation = useMutation({
     mutationFn: (d: any) => editItem
-      ? api.put(`/leaves/types/${editItem.id}`, d)
-      : api.post('/leaves/types', { ...d, companyId }),
+      ? leaveService.updateType(editItem.id, d)
+      : leaveService.createType({ ...d, companyId }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['leave-types'] }); reset(); setShowForm(false); setEditItem(null); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/leaves/types/${id}`),
+    mutationFn: (id: string) => leaveService.deleteType(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leave-types'] }),
   });
 

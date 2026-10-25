@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
-import api from '@lib/axios';
+import { authService } from '@features/../services/auth.service';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/forgot-password', { email: data.email });
+      await authService.forgotPassword(data.email);
       setSent(true);
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Something went wrong. Please try again.');

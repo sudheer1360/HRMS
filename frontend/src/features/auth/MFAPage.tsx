@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { setCredentials } from '@store/slices/authSlice';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
-import api from '@lib/axios';
+import { authService } from '@features/../services/auth.service';
 
 const RESEND_COOLDOWN = 30; // seconds
 
@@ -49,11 +49,7 @@ export default function MFAPage() {
     setError('');
     setResendSuccess('');
     try {
-      const response = await api.post('/auth/mfa/verify', {
-        sessionToken,
-        code: data.code,
-      });
-      const result = response.data;
+      const result = await authService.verifyMFA(sessionToken, data.code);
       dispatch(setCredentials({
         user: result.data.user,
         accessToken: result.data.accessToken,
@@ -72,7 +68,7 @@ export default function MFAPage() {
     setError('');
     setResendSuccess('');
     try {
-      await api.post('/auth/mfa/resend', { sessionToken });
+      await authService.resendMFA(sessionToken);
       setResendSuccess('A new code has been sent.');
       setCooldown(RESEND_COOLDOWN);
     } catch (err: any) {

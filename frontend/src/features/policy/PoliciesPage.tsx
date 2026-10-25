@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { policyService } from '@features/../services/policy.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -53,11 +53,11 @@ function MyPoliciesTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-policies'],
-    queryFn: async () => { const { data } = await api.get('/policies/my/all'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await policyService.listMy(); return data.data ?? []; },
   });
 
   const ackMutation = useMutation({
-    mutationFn: (policyId: string) => api.post('/policies/acknowledge', { policyId }),
+    mutationFn: (policyId: string) => policyService.acknowledge(policyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-policies'] }),
   });
 
@@ -130,7 +130,7 @@ function AdminTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['all-policies'],
-    queryFn: async () => { const { data } = await api.get('/policies?limit=100'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await policyService.list({ limit: 100 }); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
@@ -140,8 +140,8 @@ function AdminTab() {
 
   const saveMutation = useMutation({
     mutationFn: (d: any) => editItem
-      ? api.put(`/policies/${editItem.id}`, { ...d, requiresAcknowledgement: d.requiresAcknowledgement === 'true' })
-      : api.post('/policies', { ...d, requiresAcknowledgement: d.requiresAcknowledgement === 'true' }),
+      ? policyService.update(editItem.id, { ...d, requiresAcknowledgement: d.requiresAcknowledgement === 'true' })
+      : policyService.create({ ...d, requiresAcknowledgement: d.requiresAcknowledgement === 'true' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-policies'] });
       reset();
@@ -151,12 +151,12 @@ function AdminTab() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/policies/${id}/publish`),
+    mutationFn: (id: string) => policyService.publish(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['all-policies'] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/policies/${id}`),
+    mutationFn: (id: string) => policyService.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['all-policies'] }),
   });
 
@@ -294,7 +294,7 @@ function AdminTab() {
 function AckStatsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['all-policies'],
-    queryFn: async () => { const { data } = await api.get('/policies?limit=100'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await policyService.list({ limit: 100 }); return data.data ?? []; },
   });
 
   const policies: any[] = data ?? [];
@@ -312,7 +312,7 @@ function AckStatsTab() {
       const results = await Promise.allSettled(
         statsQueries.slice(0, 20).map(async (p) => {
           try {
-            const { data } = await api.get(`/policies/${p.id}/stats`);
+            const { data } = await policyService.getStats(p.id);
             return { id: p.id, title: p.title, ...(data.data ?? {}) };
           } catch {
             return { id: p.id, title: p.title, total: 0, acknowledged: 0, pending: 0, acknowledgementRate: 0 };

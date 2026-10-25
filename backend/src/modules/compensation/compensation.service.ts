@@ -26,7 +26,7 @@ export class CompensationService {
         [tenantId, input.cycleName, input.cycleType ?? 'Annual', input.periodStart,
          input.periodEnd, input.budgetPercent ?? null, userId]
       );
-      return queryOne('SELECT * FROM compensation_cycles WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM compensation_cycles WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `cc-${Date.now()}`, ...input, tenantId, status: 'Planning', createdAt: new Date().toISOString() }; }
   }
 
@@ -34,7 +34,7 @@ export class CompensationService {
     try {
       await query('UPDATE compensation_cycles SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?',
         ['Active', id, tenantId]);
-      return queryOne('SELECT * FROM compensation_cycles WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM compensation_cycles WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id, status: 'Active' }; }
   }
 
@@ -58,7 +58,7 @@ export class CompensationService {
         [tenantId, input.employeeId, input.cycleId ?? null, input.bonusType ?? 'Performance',
          input.amount, input.paymentDate ?? null, userId]
       );
-      return queryOne('SELECT * FROM employee_bonuses WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM employee_bonuses WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `bon-${Date.now()}`, ...input, tenantId, status: 'Pending', createdAt: new Date().toISOString() }; }
   }
 
@@ -82,7 +82,7 @@ export class CompensationService {
         [tenantId, userId, input.loanType ?? 'Personal', input.principalAmount, input.tenureMonths ?? 12,
          input.emiAmount ?? null, input.interestRate ?? 0, input.disbursementDate ?? null, userId]
       );
-      return queryOne('SELECT * FROM employee_loans WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM employee_loans WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `ln-${Date.now()}`, ...input, tenantId, status: 'Requested', createdAt: new Date().toISOString() }; }
   }
 
@@ -118,7 +118,7 @@ export class CompensationService {
         [tenantId, input.employeeId, input.cycleId ?? null, input.previousCtc ?? 0,
          input.revisedCtc, input.hikePercent ?? null, input.effectiveDate, input.reason ?? null, userId]
       );
-      return queryOne('SELECT * FROM ctc_revisions WHERE id = ?', [id]);
+      return queryOne('SELECT * FROM ctc_revisions WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     } catch { return { id: `ctc-${Date.now()}`, ...input, tenantId, status: 'Pending', createdAt: new Date().toISOString() }; }
   }
 }

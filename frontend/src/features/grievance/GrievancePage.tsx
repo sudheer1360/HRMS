@@ -11,7 +11,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { grievanceService } from '@features/../services/grievance.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ function SubmitTab() {
   }, [category, setValue]);
 
   const mutation = useMutation({
-    mutationFn: (data: SubmitForm) => api.post('/extended/grievances', data).then(r => r.data),
+    mutationFn: (data: SubmitForm) => grievanceService.submit(data),
     onSuccess: (data) => {
       setSubmitted({ ticketNumber: data.data?.ticketNumber ?? 'GRV-NEW' });
       queryClient.invalidateQueries({ queryKey: ['grievances'] });
@@ -282,13 +282,13 @@ function ComplaintsTab({ poshOnly = false }: { poshOnly?: boolean }) {
       const params = new URLSearchParams();
       if (statusFilter) params.set('status', statusFilter);
       if (catFilter) params.set('category', catFilter);
-      const { data } = await api.get(`/extended/grievances?${params}`);
+      const { data } = await grievanceService.list(Object.fromEntries(new URLSearchParams(params)));
       return data;
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => api.patch(`/extended/grievances/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => grievanceService.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['grievances'] }),
   });
 
@@ -348,7 +348,7 @@ function SLATab() {
   const { data, isLoading } = useQuery({
     queryKey: ['grievance-sla'],
     queryFn: async () => {
-      const { data } = await api.get('/extended/grievances/sla');
+      const { data } = await grievanceService.getSLAStatus('all');
       return data?.data ?? data;
     },
   });

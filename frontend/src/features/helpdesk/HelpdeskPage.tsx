@@ -11,7 +11,8 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { helpdeskService } from '@features/../services/platform.service';
+import { employeeService } from '@features/../services/employee.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -95,7 +96,7 @@ function SubmitTicketTab() {
   });
 
   const mutation = useMutation({
-    mutationFn: (d: TicketForm) => api.post('/platform/tickets', d).then(r => r.data),
+    mutationFn: (d: TicketForm) => helpdeskService.createTicket(d),
     onSuccess: (data) => {
       setSuccess(data.data?.ticket_code ?? data.data?.ticketCode ?? 'TKT-NEW');
       queryClient.invalidateQueries({ queryKey: ['helpdesk-tickets'] });
@@ -190,29 +191,29 @@ function TicketDetail({ ticket, onClose, isAgent }: { ticket: any; onClose: () =
 
   const { data: commentsData } = useQuery({
     queryKey: ['ticket-comments', ticket.id],
-    queryFn: async () => { const { data } = await api.get(`/platform/tickets/${ticket.id}/comments`); return data; },
+    queryFn: async () => { const { data } = await helpdeskService.listComments(ticket.id); return data; },
   });
   const comments: any[] = commentsData?.data ?? [];
 
   const { data: empData } = useQuery({
     queryKey: ['employees-list'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data; },
+    queryFn: async () => { const { data } = await employeeService.list({ limit: 100 }); return data; },
     enabled: isAgent,
   });
   const employees: any[] = empData?.data ?? [];
 
   const commentMut = useMutation({
-    mutationFn: () => api.post(`/platform/tickets/${ticket.id}/comments`, { comment, isInternal }),
+    mutationFn: () => helpdeskService.addComment(ticket.id, comment, isInternal),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['ticket-comments', ticket.id] }); setComment(''); },
   });
 
   const updateMut = useMutation({
-    mutationFn: (data: any) => api.patch(`/platform/tickets/${ticket.id}`, data),
+    mutationFn: (data: any) => helpdeskService.updateTicket(ticket.id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['helpdesk-tickets'] }); },
   });
 
   const csatMut = useMutation({
-    mutationFn: (rating: number) => api.post(`/platform/tickets/${ticket.id}/csat`, { rating }),
+    mutationFn: (rating: number) => helpdeskService.submitCSAT(ticket.id, rating),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['helpdesk-tickets'] }),
   });
 
@@ -448,7 +449,7 @@ function MyTicketsTab() {
       const p = new URLSearchParams({ my: 'true' });
       if (statusFilter) p.set('status', statusFilter);
       try {
-        const { data } = await api.get(`/platform/tickets/my?${p}`);
+        const { data } = await helpdeskService.listMyTickets(Object.fromEntries(new URLSearchParams(p)));
         return data;
       } catch { return { data: FALLBACK_TICKETS }; }
     },
@@ -499,7 +500,7 @@ function AgentQueueTab() {
       const p = new URLSearchParams();
       if (statusFilter) p.set('status', statusFilter);
       try {
-        const { data } = await api.get(`/platform/tickets?${p}`);
+        const { data } = await helpdeskService.listTickets(Object.fromEntries(new URLSearchParams(p)));
         return data;
       } catch { return { data: FALLBACK_TICKETS }; }
     },
@@ -549,7 +550,7 @@ function StatsDashboard() {
     queryKey: ['helpdesk-stats'],
     queryFn: async () => {
       try {
-        const { data } = await api.get('/platform/tickets/stats');
+        const { data } = await helpdeskService.getTicketStats();
         return data?.data ?? data;
       } catch {
         return {

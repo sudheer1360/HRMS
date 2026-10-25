@@ -7,7 +7,10 @@ import {
 import { Button } from '@components/ui/Button';
 import { Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { leaveService } from '@features/../services/leave.service';
+import { attendanceService } from '@features/../services/attendance.service';
+import { employeeService } from '@features/../services/employee.service';
+import { shiftService } from '@features/../services/shift.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -34,21 +37,21 @@ function ApprovalsTab() {
 
   const { data: leaveData, isLoading: loadingLeaves } = useQuery({
     queryKey: ['mss-leave-pending'],
-    queryFn: async () => { const { data } = await api.get('/leaves?status=Pending&limit=30'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await leaveService.list({ status: 'Pending', limit: 30 }); return data.data ?? []; },
   });
 
   const { data: corrData, isLoading: loadingCorr } = useQuery({
     queryKey: ['mss-corr-pending'],
-    queryFn: async () => { const { data } = await api.get('/attendance/corrections?status=Pending+Approval&limit=20'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await attendanceService.listCorrections({ status: 'Pending Approval', limit: 20 }); return data.data ?? []; },
   });
 
   const approveLeaveMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => api.patch(`/leaves/${id}/approve`, { status }),
+    mutationFn: ({ id, status }: { id: string; status: string }) => leaveService.approve(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mss-leave-pending'] }),
   });
 
   const approveCorrMutation = useMutation({
-    mutationFn: ({ id, action }: { id: string; action: string }) => api.patch(`/attendance/corrections/${id}/${action}`),
+    mutationFn: ({ id, action }: { id: string; action: string }) => action === 'approve' ? attendanceService.approveCorrection(id) : attendanceService.rejectCorrection(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mss-corr-pending'] }),
   });
 
@@ -157,7 +160,7 @@ function ApprovalsTab() {
 function MyTeamTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['mss-team'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await employeeService.list({ limit: 100 }); return data.data ?? []; },
   });
 
   const team: any[] = data ?? [];
@@ -219,7 +222,7 @@ function TeamAttendanceTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['team-attendance', date],
-    queryFn: async () => { const { data } = await api.get(`/attendance?date=${date}&limit=100`); return data.data ?? []; },
+    queryFn: async () => { const { data } = await attendanceService.list({ date, limit: 100 }); return data.data ?? []; },
   });
 
   const records: any[] = data ?? [];
@@ -287,7 +290,7 @@ function TeamLeavesTab() {
     queryKey: ['team-leaves', status],
     queryFn: async () => {
       const q = status !== 'All' ? `?status=${status}&limit=50` : '?limit=50';
-      const { data } = await api.get(`/leaves${q}`);
+      const { data } = await leaveService.list(Object.fromEntries(new URLSearchParams(q.replace('?',''))));
       return data.data ?? [];
     },
   });
@@ -358,11 +361,11 @@ function OTApprovalsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['mss-ot'],
-    queryFn: async () => { const { data } = await api.get('/shifts/overtime?status=Pending&limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await shiftService.listOvertime({ status: 'Pending', limit: 50 }); return data.data ?? []; },
   });
 
   const approveMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => api.patch(`/shifts/overtime/${id}/approve`, { status }),
+    mutationFn: ({ id, status }: { id: string; status: string }) => shiftService.approveOvertime(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mss-ot'] }),
   });
 
@@ -416,11 +419,11 @@ export default function MSSDashboardPage() {
   // Badge counts
   const { data: leaveCount } = useQuery({
     queryKey: ['mss-leave-count'],
-    queryFn: async () => { const { data } = await api.get('/leaves?status=Pending&limit=1'); return data.meta?.total ?? 0; },
+    queryFn: async () => { const { data } = await leaveService.list({ status: 'Pending', limit: 1 }); return data.meta?.total ?? 0; },
   });
   const { data: otCount } = useQuery({
     queryKey: ['mss-ot-count'],
-    queryFn: async () => { const { data } = await api.get('/shifts/overtime?status=Pending&limit=1'); return data.meta?.total ?? 0; },
+    queryFn: async () => { const { data } = await shiftService.listOvertime({ status: 'Pending', limit: 1 }); return data.meta?.total ?? 0; },
   });
 
   const BADGE: Record<string, number | undefined> = {

@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { shiftService } from '@features/../services/shift.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -46,7 +46,7 @@ const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'F
 function MyShiftTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-shift'],
-    queryFn: async () => { const { data } = await api.get('/shifts/my-shift'); return data.data; },
+    queryFn: async () => { const { data } = await shiftService.getMyShift(); return data.data; },
   });
 
   if (isLoading) return <Spinner />;
@@ -133,14 +133,14 @@ function ShiftsTab() {
   // Fetch real companyId from auth profile instead of using a hardcoded UUID
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
   const companyId = profile?.companyId ?? profile?.company_id ?? '';
 
   const { data, isLoading } = useQuery({
     queryKey: ['shifts', companyId],
     enabled: !!companyId,
-    queryFn: async () => { const { data } = await api.get(`/shifts/shifts/${companyId}`); return data.data ?? []; },
+    queryFn: async () => { const { data } = await shiftService.listShifts(companyId); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
@@ -150,13 +150,13 @@ function ShiftsTab() {
 
   const saveMutation = useMutation({
     mutationFn: (d: any) => editItem
-      ? api.put(`/shifts/shifts/${editItem.id}`, d)
-      : api.post('/shifts/shifts', { ...d, companyId }),
+      ? shiftService.updateShift(editItem.id, d)
+      : shiftService.createShift({ ...d, companyId }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['shifts'] }); reset(); setShowForm(false); setEditItem(null); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/shifts/shifts/${id}`),
+    mutationFn: (id: string) => shiftService.deleteShift(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shifts'] }),
   });
 
@@ -272,30 +272,30 @@ function RostersTab() {
   // Fetch real companyId from auth profile instead of using a hardcoded UUID
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: async () => { const { data } = await authService.me(); return data.data; },
   });
   const companyId = profile?.companyId ?? profile?.company_id ?? '';
 
   const { data: shiftsData } = useQuery({
     queryKey: ['shifts', companyId],
     enabled: !!companyId,
-    queryFn: async () => { const { data } = await api.get(`/shifts/shifts/${companyId}`); return data.data ?? []; },
+    queryFn: async () => { const { data } = await shiftService.listShifts(companyId); return data.data ?? []; },
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['rosters'],
-    queryFn: async () => { const { data } = await api.get('/shifts/rosters?limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await shiftService.listRosters({ limit: 50 }); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof rosterSchema>>({ resolver: zodResolver(rosterSchema) });
 
   const saveMutation = useMutation({
-    mutationFn: (d: any) => api.post('/shifts/rosters', d),
+    mutationFn: (d: any) => shiftService.createRoster(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['rosters'] }); reset(); setShowForm(false); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/shifts/rosters/${id}`),
+    mutationFn: (id: string) => shiftService.deleteRoster(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rosters'] }),
   });
 
@@ -392,23 +392,23 @@ function OvertimeTab() {
 
   const { data: myOT, isLoading: loadingMy } = useQuery({
     queryKey: ['my-ot'],
-    queryFn: async () => { const { data } = await api.get('/shifts/overtime/my?limit=30'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await shiftService.listMyOvertime({ limit: 30 }); return data.data ?? []; },
   });
 
   const { data: pendingOT, isLoading: loadingPending } = useQuery({
     queryKey: ['pending-ot'],
-    queryFn: async () => { const { data } = await api.get('/shifts/overtime?status=Pending&limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await shiftService.listOvertime({ status: 'Pending', limit: 50 }); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof otSchema>>({ resolver: zodResolver(otSchema) });
 
   const submitMutation = useMutation({
-    mutationFn: (d: any) => api.post('/shifts/overtime', d),
+    mutationFn: (d: any) => shiftService.submitOvertime(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-ot'] }); reset(); setShowForm(false); },
   });
 
   const approveMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => api.patch(`/shifts/overtime/${id}/approve`, { status }),
+    mutationFn: ({ id, status }: { id: string; status: string }) => shiftService.approveOvertime(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pending-ot'] }),
   });
 

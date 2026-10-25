@@ -5,7 +5,7 @@ import { Plus, Search, FileText, Eye, Edit, Trash2, LayoutList } from 'lucide-re
 import { Button } from '@components/ui/Button';
 import { Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { formbuilderService } from '@features/../services/formbuilder.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -41,12 +41,12 @@ async function listForms(params: { category?: string; search?: string; page?: nu
   const p = new URLSearchParams({ page: String(params.page ?? 1), limit: '20' });
   if (params.category && params.category !== 'All') p.set('category', params.category);
   if (params.search) p.set('search', params.search);
-  const { data } = await api.get<{ success: boolean; data: DynamicForm[]; meta: any }>(`/extended/forms?${p}`);
+  const { data } = await formbuilderService.list(Object.fromEntries(new URLSearchParams(p)));
   return data;
 }
 
 async function deleteForm(id: string) {
-  await api.delete(`/extended/forms/${id}`);
+  await formbuilderService.delete(id);
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────

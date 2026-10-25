@@ -10,7 +10,8 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate, cn } from '@lib/utils';
-import api from '@lib/axios';
+import { attendanceService } from '@features/../services/attendance.service';
+import { authService } from '@features/../services/auth.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -95,11 +96,11 @@ function ClockCard() {
   const [msg, setMsg] = React.useState('');
 
   const clockIn = useMutation({
-    mutationFn: () => api.post('/attendance/clock-in'),
+    mutationFn: () => attendanceService.clockIn(),
     onSuccess: () => { setMsg('Clocked in ✓'); queryClient.invalidateQueries({ queryKey: ['attendance-my'] }); setTimeout(() => setMsg(''), 3000); },
   });
   const clockOut = useMutation({
-    mutationFn: () => api.post('/attendance/clock-out'),
+    mutationFn: () => attendanceService.clockOut(),
     onSuccess: () => { setMsg('Clocked out ✓'); queryClient.invalidateQueries({ queryKey: ['attendance-my'] }); setTimeout(() => setMsg(''), 3000); },
   });
 
@@ -143,10 +144,7 @@ function DailyTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-daily', fromDate, toDate],
-    queryFn: async () => {
-      const { data } = await api.get(`/attendance?fromDate=${fromDate}&toDate=${toDate}&limit=100`);
-      return data;
-    },
+    queryFn: () => attendanceService.list({ fromDate, toDate, limit: 100 }),
   });
 
   const records: AttendanceRecord[] = data?.data ?? [];
@@ -232,10 +230,7 @@ function MonthlyTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-monthly', year, month],
-    queryFn: async () => {
-      const { data } = await api.get(`/attendance/my/summary?year=${year}&month=${month}`);
-      return data.data.summary as MonthlySummary;
-    },
+    queryFn: () => attendanceService.getMonthlySummary(year, month) as Promise<MonthlySummary>,
   });
 
   const prev = () => { if (month === 1) { setYear(y => y - 1); setMonth(12); } else setMonth(m => m - 1); };
@@ -287,10 +282,7 @@ function MyAttendanceTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-my'],
-    queryFn: async () => {
-      const { data } = await api.get(`/attendance/my?fromDate=${firstDay}&toDate=${lastDay}&limit=50`);
-      return data;
-    },
+    queryFn: () => attendanceService.listMy({ fromDate: firstDay, toDate: lastDay, limit: 50 }),
   });
 
   const records: AttendanceRecord[] = data?.data ?? [];
@@ -395,10 +387,7 @@ function CorrectionsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-corrections'],
-    queryFn: async () => {
-      const { data } = await api.get('/attendance/corrections?limit=50');
-      return data;
-    },
+    queryFn: () => attendanceService.listCorrections({ limit: 50 }),
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -406,7 +395,7 @@ function CorrectionsTab() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: (d: any) => api.post('/attendance/corrections', d),
+    mutationFn: (d: any) => attendanceService.submitCorrection(d),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance-corrections'] });
       reset(); setShowForm(false);
@@ -415,7 +404,7 @@ function CorrectionsTab() {
 
   const approveMutation = useMutation({
     mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
-      api.patch(`/attendance/corrections/${id}/${action}`),
+      action === 'approve' ? attendanceService.approveCorrection(id) : attendanceService.rejectCorrection(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attendance-corrections'] }),
   });
 
@@ -507,26 +496,23 @@ function LocksTab() {
   // We need a companyId — try to get it from profile
   const { data: profile } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const { data } = await api.get('/auth/me'); return data.data; },
+    queryFn: () => authService.me(),
   });
   const companyId = profile?.companyId ?? profile?.company_id ?? '';
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-locks', companyId],
-    queryFn: async () => {
-      const { data } = await api.get(`/attendance/locks/${companyId}`);
-      return data.data ?? [];
-    },
+    queryFn: () => attendanceService.listLocks(companyId),
     enabled: !!companyId,
   });
 
   const lockMutation = useMutation({
-    mutationFn: (d: any) => api.post('/attendance/lock', d),
+    mutationFn: (d: any) => attendanceService.lockPeriod(d),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attendance-locks'] }),
   });
 
   const unlockMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/attendance/lock/${id}/unlock`),
+    mutationFn: (id: string) => attendanceService.unlockPeriod(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attendance-locks'] }),
   });
 

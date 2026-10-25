@@ -2,14 +2,18 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Building2, Clock, CalendarCheck, Banknote, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import api from '@lib/axios';
+import { employeeService } from '@features/../services/employee.service';
+import { organizationService } from '@features/../services/organization.service';
+import { attendanceService } from '@features/../services/attendance.service';
+import { leaveService } from '@features/../services/leave.service';
+import { helpdeskService } from '@features/../services/platform.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 function useDashboardStats() {
   const employees = useQuery({
     queryKey: ['dashboard', 'employees-count'],
     queryFn: async () => {
-      const { data } = await api.get('/employees?page=1&limit=1');
+      const { data } = await employeeService.list({ page: 1, limit: 1 });
       return data?.meta?.total ?? null;
     },
     staleTime: 60_000,
@@ -18,7 +22,7 @@ function useDashboardStats() {
   const companies = useQuery({
     queryKey: ['dashboard', 'companies-count'],
     queryFn: async () => {
-      const { data } = await api.get('/organization/companies?page=1&limit=1&status=Active');
+      const { data } = await organizationService.listCompanies({ page: 1, limit: 1, status: 'Active' });
       return data?.meta?.total ?? null;
     },
     staleTime: 60_000,
@@ -28,7 +32,7 @@ function useDashboardStats() {
     queryKey: ['dashboard', 'today-present'],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const { data } = await api.get(`/attendance/summary?date=${today}`);
+      const { data } = await attendanceService.getDailySummary(today);
       return data?.data?.present ?? null;
     },
     staleTime: 60_000,
@@ -37,7 +41,7 @@ function useDashboardStats() {
   const pendingLeaves = useQuery({
     queryKey: ['dashboard', 'pending-leaves'],
     queryFn: async () => {
-      const { data } = await api.get('/leaves?status=Pending&page=1&limit=1');
+      const { data } = await leaveService.list({ status: 'Pending', page: 1, limit: 1 });
       return data?.meta?.total ?? null;
     },
     staleTime: 60_000,
@@ -46,7 +50,7 @@ function useDashboardStats() {
   const openTickets = useQuery({
     queryKey: ['dashboard', 'open-tickets'],
     queryFn: async () => {
-      const { data } = await api.get('/platform/tickets?status=Open&page=1&limit=1');
+      const { data } = await helpdeskService.listTickets({ status: 'Open', page: 1, limit: 1 });
       return data?.meta?.total ?? null;
     },
     staleTime: 60_000,

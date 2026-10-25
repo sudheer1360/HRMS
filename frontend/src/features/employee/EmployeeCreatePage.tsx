@@ -7,7 +7,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '@components/ui/Button';
 import { Input, Select } from '@components/ui/Input';
 import { PageHeader } from '@components/ui/PageHeader';
-import api from '@lib/axios';
+import { employeeService } from '@features/../services/employee.service';
 import { getCompanies, getBranches, getDepartments, getDesignations, getGrades } from '@features/organization/organization.api';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ export default function EmployeeCreatePage() {
   const mutation = useMutation({
     mutationFn: async (data: EmployeeFormValues) => {
       const cleaned = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== '' && v !== undefined));
-      const { data: result } = await api.post('/employees', cleaned);
+      const { data: result } = await employeeService.create(cleaned);
       return result;
     },
     onSuccess: () => navigate('/employees'),

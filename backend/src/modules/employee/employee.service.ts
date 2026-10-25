@@ -2,13 +2,20 @@ import { query, queryOne, insert, execute, transaction } from '../../config/data
 import { NotFoundError, ConflictError, BusinessRuleError } from '../../common/errors/index.js';
 import { maskAadhaar, maskPAN, maskAccountNumber, isValidPAN, isValidAadhaar } from '../../common/utils/index.js';
 import { config } from '../../config/index.js';
+import { BaseService } from '../../common/base/index.js';
 import crypto from 'crypto';
 
-export class EmployeeService {
+// Allowed sort columns — prevents SQL injection via the `sort` query param
+const EMPLOYEE_SORT_COLS = [
+  'created_at', 'employee_code', 'first_name', 'last_name', 'date_of_joining', 'employment_status',
+];
+
+export class EmployeeService extends BaseService {
   async list(tenantId: string, params: any) {
-    const { search, status, departmentId, designationId, employeeType, sort = 'created_at', order = 'desc' } = params;
-    const page = Number(params.page || 1);
-    const limit = Number(params.limit || 20);
+    const { search, status, departmentId, designationId, employeeType } = params;
+    const sort = this.sanitiseSortColumn(params.sort, EMPLOYEE_SORT_COLS);
+    const order = this.sanitiseSortOrder(params.order);
+    const { page, limit, offset } = this.buildPagination(params);
     let where = 'WHERE e.tenant_id = ? AND e.deleted_at IS NULL';
     const vals: any[] = [tenantId];
     if (status) { where += ' AND e.employment_status = ?'; vals.push(status); }
@@ -21,11 +28,11 @@ export class EmployeeService {
       query<any>(`SELECT e.*, d.department_name, des.designation_name, b.branch_name, g.grade_name
         FROM employees e LEFT JOIN departments d ON e.department_id = d.id LEFT JOIN designations des ON e.designation_id = des.id
         LEFT JOIN branches b ON e.branch_id = b.id LEFT JOIN grades g ON e.grade_id = g.id
-        ${where} ORDER BY e.${sort} ${order} LIMIT ? OFFSET ?`, [...vals, limit, (page - 1) * limit]),
+        ${where} ORDER BY e.${sort} ${order} LIMIT ? OFFSET ?`, [...vals, limit, offset]),
       query<any>(`SELECT COUNT(*) as total FROM employees e ${where}`, vals),
     ]);
     const total = countResult[0]?.total || 0;
-    return { data: rows, meta: { page, limit, total, totalPages: Math.ceil(total / limit), hasNext: page * limit < total, hasPrev: page > 1 } };
+    return { data: rows, meta: this.buildPaginatedMeta(total, page, limit) };
   }
 
   async getById(id: string, tenantId: string) {

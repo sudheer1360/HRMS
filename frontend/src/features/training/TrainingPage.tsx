@@ -10,7 +10,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { trainingService } from '@features/../services/recruitment.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -67,7 +67,7 @@ function ProgramsTab() {
 
   const { data: programs, isLoading } = useQuery({
     queryKey: ['training-programs'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/training/programs?limit=50'); return data; },
+    queryFn: async () => { const { data } = await trainingService.listPrograms({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -76,12 +76,12 @@ function ProgramsTab() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/training/programs', { ...d, isMandatory: d.isMandatory === 'true', isCertification: d.isCertification === 'true' }),
+    mutationFn: (d: any) => trainingService.createProgram({ ...d, isMandatory: d.isMandatory === 'true', isCertification: d.isCertification === 'true' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['training-programs'] }); reset(); setShowForm(false); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/recruitment/training/programs/${id}`),
+    mutationFn: (id: string) => trainingService.deleteProgram(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['training-programs'] }),
   });
 
@@ -204,23 +204,23 @@ function SessionsTab() {
 
   const { data: programs } = useQuery({
     queryKey: ['training-programs'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/training/programs?limit=50'); return data; },
+    queryFn: async () => { const { data } = await trainingService.listPrograms({ limit: 50 }); return data; },
   });
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['training-sessions'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/training/sessions?limit=50'); return data; },
+    queryFn: async () => { const { data } = await trainingService.listSessions({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof sessionSchema>>({ resolver: zodResolver(sessionSchema) });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/training/sessions', d),
+    mutationFn: (d: any) => trainingService.createSession(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['training-sessions'] }); reset(); setShowForm(false); },
   });
 
   const enrollMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/recruitment/training/sessions/${id}/enroll`),
+    mutationFn: (id: string) => trainingService.enrollSession(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['training-sessions'] }),
   });
 
@@ -297,13 +297,13 @@ function MyTrainingTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-training'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/training/my-training?limit=50'); return data; },
+    queryFn: async () => { const { data } = await trainingService.listMyTraining({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset } = useForm<z.infer<typeof feedbackSchema>>({ resolver: zodResolver(feedbackSchema) });
 
   const feedbackMutation = useMutation({
-    mutationFn: ({ id, feedback }: { id: string; feedback: any }) => api.post(`/recruitment/training/sessions/${id}/feedback`, feedback),
+    mutationFn: ({ id, feedback }: { id: string; feedback: any }) => trainingService.submitFeedback(id, feedback),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['my-training'] }); setFeedbackId(null); reset(); },
   });
 
@@ -385,7 +385,7 @@ const LEVEL_COLOR: Record<string, string> = {
 function SkillMatrixTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['skill-matrix'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/training/skill-matrix?limit=100'); return data; },
+    queryFn: async () => { const { data } = await trainingService.listSkillMatrix({ limit: 100 }); return data; },
   });
 
   const matrix: any[] = data?.data ?? [];
@@ -474,13 +474,13 @@ function CertificationsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['certifications'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/training/certifications?limit=50'); return data; },
+    queryFn: async () => { const { data } = await trainingService.listCertifications({ limit: 50 }); return data; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof certSchema>>({ resolver: zodResolver(certSchema) });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/training/certifications', d),
+    mutationFn: (d: any) => trainingService.createCertification(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['certifications'] }); reset(); setShowForm(false); },
   });
 

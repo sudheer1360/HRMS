@@ -11,7 +11,7 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Select, Badge, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { recruitmentService } from '@features/../services/recruitment.service';
 import { PageHeader } from '@components/ui/PageHeader';
 import { ConfirmDialog } from '@components/ui/ConfirmDialog';
 
@@ -72,7 +72,7 @@ function JobsTab({ onSelectJob }: { onSelectJob: (job: any) => void }) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['jobs'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/jobs?limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await recruitmentService.listJobs({ limit: 50 }); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
@@ -82,13 +82,13 @@ function JobsTab({ onSelectJob }: { onSelectJob: (job: any) => void }) {
 
   const saveMutation = useMutation({
     mutationFn: (d: any) => editItem
-      ? api.put(`/recruitment/jobs/${editItem.id}`, d)
-      : api.post('/recruitment/jobs', d),
+      ? recruitmentService.updateJob(editItem.id, d)
+      : recruitmentService.createJob(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['jobs'] }); reset(); setShowForm(false); setEditItem(null); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/recruitment/jobs/${id}`),
+    mutationFn: (id: string) => recruitmentService.deleteJob(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['jobs'] }),
   });
 
@@ -256,7 +256,7 @@ function CandidatesTab({ selectedJob }: { selectedJob: any }) {
     queryKey: ['candidates', selectedJob?.id],
     queryFn: async () => {
       const q = selectedJob ? `?jobPostingId=${selectedJob.id}&limit=100` : '?limit=100';
-      const { data } = await api.get(`/recruitment/candidates${q}`);
+      const { data } = await recruitmentService.listCandidates(Object.fromEntries(new URLSearchParams(q.replace('?',''))));
       return data.data ?? [];
     },
   });
@@ -267,17 +267,17 @@ function CandidatesTab({ selectedJob }: { selectedJob: any }) {
   });
 
   const addMutation = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/candidates', { ...d, jobPostingId: selectedJob?.id }),
+    mutationFn: (d: any) => recruitmentService.addCandidate({ ...d, jobPostingId: selectedJob?.id }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['candidates'] }); reset(); setShowForm(false); },
   });
 
   const stageMutation = useMutation({
-    mutationFn: ({ id, stage }: { id: string; stage: string }) => api.patch(`/recruitment/candidates/${id}/stage`, { stage }),
+    mutationFn: ({ id, stage }: { id: string; stage: string }) => recruitmentService.updateCandidateStage(id, stage),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['candidates'] }),
   });
 
   const rejectMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/recruitment/candidates/${id}/reject`),
+    mutationFn: (id: string) => recruitmentService.rejectCandidate(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['candidates'] }),
   });
 
@@ -424,12 +424,12 @@ function InterviewsTab() {
 
   const { data: interviews, isLoading } = useQuery({
     queryKey: ['interviews'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/interviews?limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await recruitmentService.listInterviews({ limit: 50 }); return data.data ?? []; },
   });
 
   const { data: candidates } = useQuery({
     queryKey: ['candidates-list'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/candidates?limit=100'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await recruitmentService.listCandidates({ limit: 100 }); return data.data ?? []; },
   });
 
   const { register: regI, handleSubmit: hsI, reset: resetI, formState: { errors: errI } } = useForm({
@@ -443,12 +443,12 @@ function InterviewsTab() {
   });
 
   const scheduleMutation = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/interviews', d),
+    mutationFn: (d: any) => recruitmentService.scheduleInterview(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['interviews'] }); resetI(); setShowForm(false); },
   });
 
   const feedbackMutation = useMutation({
-    mutationFn: ({ id, d }: { id: string; d: any }) => api.patch(`/recruitment/interviews/${id}/feedback`, d),
+    mutationFn: ({ id, d }: { id: string; d: any }) => recruitmentService.submitInterviewFeedback(id, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['interviews'] }); resetF(); setFeedbackFor(null); },
   });
 
@@ -593,23 +593,23 @@ function OffersTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['offers'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/offers?limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await recruitmentService.listOffers({ limit: 50 }); return data.data ?? []; },
   });
 
   const { data: candidates } = useQuery({
     queryKey: ['candidates-list'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/candidates?status=Active&limit=100'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await recruitmentService.listCandidates({ status: 'Active', limit: 100 }); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<z.infer<typeof offerSchema>>({ resolver: zodResolver(offerSchema) });
 
   const createMutation = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/offers', d),
+    mutationFn: (d: any) => recruitmentService.createOffer(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['offers'] }); reset(); setShowForm(false); },
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => api.patch(`/recruitment/offers/${id}/status`, { status }),
+    mutationFn: ({ id, status }: { id: string; status: string }) => recruitmentService.updateOfferStatus(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['offers'] }),
   });
 
@@ -716,7 +716,7 @@ function RequisitionsTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['requisitions'],
-    queryFn: async () => { const { data } = await api.get('/recruitment/requisitions?limit=50'); return data.data ?? []; },
+    queryFn: async () => { const { data } = await recruitmentService.listRequisitions({ limit: 50 }); return data.data ?? []; },
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -725,17 +725,17 @@ function RequisitionsTab() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (d: any) => api.post('/recruitment/requisitions', d),
+    mutationFn: (d: any) => recruitmentService.createRequisition(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['requisitions'] }); reset(); setShowForm(false); },
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/recruitment/requisitions/${id}/approve`),
+    mutationFn: (id: string) => recruitmentService.approveRequisition(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/recruitment/requisitions/${id}`),
+    mutationFn: (id: string) => recruitmentService.deleteRequisition(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
   });
 

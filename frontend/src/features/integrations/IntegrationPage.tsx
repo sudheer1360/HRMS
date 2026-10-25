@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { Input, Spinner } from '@components/ui/Input';
-import api from '@lib/axios';
+import { integrationService } from '@features/../services/platform.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ function APIKeysTab() {
   const { data } = useQuery({
     queryKey: ['api-keys'],
     queryFn: async () => {
-      try { const { data } = await api.get('/platform/api-keys'); return data; }
+      try { const { data } = await integrationService.listApiKeys(); return data; }
       catch { return { data: FALLBACK_KEYS }; }
     },
   });
@@ -139,7 +139,7 @@ function APIKeysTab() {
   });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/platform/api-keys', { name: d.name, scopes: d.scopes.split(',').map((s: string) => s.trim()), expiresAt: d.expiresAt || null }).then(r => r.data),
+    mutationFn: (d: any) => integrationService.createApiKey({ name: d.name, scopes: d.scopes.split(',').map((s: string) => s.trim()), expiresAt: d.expiresAt || null }),
     onSuccess: (data) => {
       setNewKey(data.data?.key ?? null);
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
@@ -148,7 +148,7 @@ function APIKeysTab() {
   });
 
   const revokeMut = useMutation({
-    mutationFn: (id: string) => api.delete(`/platform/api-keys/${id}`),
+    mutationFn: (id: string) => integrationService.revokeApiKey(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['api-keys'] }),
   });
 
@@ -263,7 +263,7 @@ function WebhooksTab() {
   const { data } = useQuery({
     queryKey: ['webhooks'],
     queryFn: async () => {
-      try { const { data } = await api.get('/platform/webhooks'); return data; }
+      try { const { data } = await integrationService.listWebhooks(); return data; }
       catch { return { data: FALLBACK_WEBHOOKS }; }
     },
   });
@@ -274,7 +274,7 @@ function WebhooksTab() {
   });
 
   const createMut = useMutation({
-    mutationFn: (d: any) => api.post('/platform/webhooks', { name: d.name, url: d.url, events: d.events.split(',').map((e: string) => e.trim()) }).then(r => r.data),
+    mutationFn: (d: any) => integrationService.createWebhook({ name: d.name, url: d.url, events: d.events.split(',').map((e: string) => e.trim()) }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['webhooks'] }); reset(); setShowForm(false); },
   });
 

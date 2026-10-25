@@ -160,6 +160,7 @@ export async function seed() {
     ['REPORT_VIEW','REPORT','VIEW'],
     ['FORM_CREATE','FORM','CREATE'],
     ['STAT_VIEW','STAT','VIEW'],
+    ['COMPENSATION_VIEW','COMPENSATION','VIEW'], ['COMPENSATION_CREATE','COMPENSATION','CREATE'], ['COMPENSATION_EDIT','COMPENSATION','EDIT'],
   ];
   const permIdMap: Record<string, string> = {};
   for (const [code, module, action] of perms) {
@@ -179,7 +180,7 @@ export async function seed() {
   for (const code of ['EMP_VIEW','ATTN_VIEW','ATTN_APPROVE','LEAVE_VIEW','LEAVE_APPROVE','OT_VIEW','OT_APPROVE','PERF_VIEW','PERF_EDIT','POLICY_VIEW']) {
     await query(`INSERT IGNORE INTO role_permissions (id, role_id, permission_id) VALUES (UUID(), ?, ?)`, [roleMap['Manager'], permIdMap[code]]);
   }
-  for (const code of ['PAYROLL_VIEW','PAYROLL_RUN','PAYROLL_APPROVE','EMP_VIEW','REPORT_VIEW']) {
+  for (const code of ['PAYROLL_VIEW','PAYROLL_RUN','PAYROLL_APPROVE','EMP_VIEW','REPORT_VIEW','COMPENSATION_VIEW','COMPENSATION_CREATE','COMPENSATION_EDIT']) {
     await query(`INSERT IGNORE INTO role_permissions (id, role_id, permission_id) VALUES (UUID(), ?, ?)`, [roleMap['Payroll Admin'], permIdMap[code]]);
   }
   console.log('Roles and permissions seeded');

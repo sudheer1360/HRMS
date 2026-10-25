@@ -3,17 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 import { Target, Monitor, AlertTriangle, Shield, LogOut } from 'lucide-react';
 import { Badge, Spinner } from '@components/ui/Input';
 import { formatDate, formatCurrency } from '@lib/utils';
-import api from '@lib/axios';
+import { operationsService } from '@features/../services/operations.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 export default function OperationsPage() {
   const [tab, setTab] = React.useState('performance');
 
-  const { data: reviews } = useQuery({ queryKey: ['my-reviews'], queryFn: async () => { const { data } = await api.get('/operations/performance/reviews?my=true'); return data; }, enabled: tab === 'performance' });
-  const { data: assets } = useQuery({ queryKey: ['my-assets'], queryFn: async () => { const { data } = await api.get('/operations/assets?my=true'); return data; }, enabled: tab === 'assets' });
-  const { data: grievances } = useQuery({ queryKey: ['grievances'], queryFn: async () => { const { data } = await api.get('/operations/grievances?limit=20'); return data; }, enabled: tab === 'grievance' });
-  const { data: disciplinary } = useQuery({ queryKey: ['disciplinary'], queryFn: async () => { const { data } = await api.get('/operations/disciplinary?limit=20'); return data; }, enabled: tab === 'disciplinary' });
-  const { data: exits } = useQuery({ queryKey: ['exits'], queryFn: async () => { const { data } = await api.get('/operations/exits?limit=20'); return data; }, enabled: tab === 'exit' });
+  const { data: reviews } = useQuery({ queryKey: ['my-reviews'], queryFn: async () => { const { data } = await operationsService.listReviews({ my: true }); return data; }, enabled: tab === 'performance' });
+  const { data: assets } = useQuery({ queryKey: ['my-assets'], queryFn: async () => { const { data } = await operationsService.listAssets({ my: true }); return data; }, enabled: tab === 'assets' });
+  const { data: grievances } = useQuery({ queryKey: ['grievances'], queryFn: async () => { const { data } = await operationsService.listGrievances({ limit: 20 }); return data; }, enabled: tab === 'grievance' });
+  const { data: disciplinary } = useQuery({ queryKey: ['disciplinary'], queryFn: async () => { const { data } = await operationsService.listDisciplinary({ limit: 20 }); return data; }, enabled: tab === 'disciplinary' });
+  const { data: exits } = useQuery({ queryKey: ['exits'], queryFn: async () => { const { data } = await operationsService.listExits({ limit: 20 }); return data; }, enabled: tab === 'exit' });
 
   const tabs = [
     { key: 'performance', label: 'Performance', icon: Target },

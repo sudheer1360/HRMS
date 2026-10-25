@@ -11,7 +11,8 @@ import {
 import { Button } from '@components/ui/Button';
 import { Input, Spinner } from '@components/ui/Input';
 import { formatDate } from '@lib/utils';
-import api from '@lib/axios';
+import { disciplinaryService } from '@features/../services/disciplinary.service';
+import { employeeService } from '@features/../services/employee.service';
 import { PageHeader } from '@components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -72,7 +73,7 @@ function InitiateTab() {
 
   const { data: empData } = useQuery({
     queryKey: ['employees-list'],
-    queryFn: async () => { const { data } = await api.get('/employees?limit=100'); return data; },
+    queryFn: async () => { const { data } = await employeeService.list({ limit: 100 }); return data; },
   });
   const employees: any[] = empData?.data ?? [];
 
@@ -82,7 +83,7 @@ function InitiateTab() {
   });
 
   const mutation = useMutation({
-    mutationFn: (d: CaseForm) => api.post('/extended/disciplinary', d).then(r => r.data),
+    mutationFn: (d: CaseForm) => disciplinaryService.create(d),
     onSuccess: (data) => {
       setSuccess(data.data?.caseNumber ?? 'DIS-NEW');
       queryClient.invalidateQueries({ queryKey: ['disciplinary-cases'] });
@@ -179,7 +180,7 @@ function CaseCard({ c }: { c: any }) {
 
   const mutation = useMutation({
     mutationFn: ({ endpoint, data }: { endpoint: string; data: any }) =>
-      api.post(`/extended/disciplinary/${c.id}/${endpoint}`, data).then(r => r.data),
+      disciplinaryService.recordAction(c.id, { endpoint, ...data }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['disciplinary-cases'] }),
   });
 
@@ -348,7 +349,7 @@ function CasesTab() {
       const p = new URLSearchParams();
       if (statusFilter) p.set('status', statusFilter);
       if (severityFilter) p.set('severity', severityFilter);
-      const { data } = await api.get(`/extended/disciplinary?${p}`);
+      const { data } = await disciplinaryService.list(Object.fromEntries(new URLSearchParams(p)));
       return data;
     },
   });
@@ -391,7 +392,7 @@ function CasesTab() {
 function SummaryTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['disciplinary-summary'],
-    queryFn: async () => { const { data } = await api.get('/extended/disciplinary/summary'); return data?.data ?? data; },
+    queryFn: async () => { const { data } = await disciplinaryService.getSummary(); return data?.data ?? data; },
   });
 
   if (isLoading) return <div className="flex justify-center py-16"><Spinner /></div>;
